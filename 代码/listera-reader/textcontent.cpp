@@ -5,3 +5,9 @@ TextContent::TextContent(QWidget *parent)
 {
 
 }
+
+TextContent::TextContent(const QString &text, QWidget *parent)
+    : DTextEdit (text, parent)
+{
+
+}

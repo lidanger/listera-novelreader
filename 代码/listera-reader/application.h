@@ -9,6 +9,12 @@ class Application : public DApplication
 {
 public:
     Application(int &argc, char **argv);
+
+public:
+    static void setMessageLogging();
+
+private:
+    static void _messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
 };
 
 #endif // APPLICATION_H

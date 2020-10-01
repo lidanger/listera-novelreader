@@ -11,7 +11,8 @@ SOURCES += \
         main.cpp \
     mainwindow.cpp \
     application.cpp \
-    textcontent.cpp
+    textcontent.cpp \
+    readerconfig.cpp
 
 RESOURCES +=         resources.qrc
 
@@ -20,4 +21,5 @@ TRANSLATIONS = listera-reader_zh_CN.ts
 HEADERS += \
     mainwindow.h \
     application.h \
-    textcontent.h
+    textcontent.h \
+    readerconfig.h

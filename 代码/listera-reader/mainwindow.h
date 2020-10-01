@@ -1,10 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "textcontent.h"
+
 #include <DMainWindow>
 #include <DDockWidget>
 #include <DListView>
-#include <DTextEdit>
 
 DWIDGET_USE_NAMESPACE
 
@@ -28,7 +29,7 @@ private:
 private:
     DDockWidget *_ldock;
     DListWidget *_booklist;
-    DTextEdit *_content;
+    TextContent *_content;
 };
 
 #endif // MAINWINDOW_H

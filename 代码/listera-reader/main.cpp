@@ -1,4 +1,5 @@
 #include <DApplication>
+#include <DApplicationSettings>
 #include <DWidgetUtil>
 #include "mainwindow.h"
 #include "application.h"
@@ -9,7 +10,12 @@ int main(int argc, char *argv[])
 {
     DApplication::loadDXcbPlugin();
 
+    Application::setMessageLogging();
+
     Application a(argc, argv);
+
+    DApplicationSettings savetheme;
+    Q_UNUSED(savetheme)
 
     // 主窗口
     MainWindow mw;
@@ -17,5 +23,6 @@ int main(int argc, char *argv[])
 
     Dtk::Widget::moveToCenter(&mw);
 
+    // 消息循环
     return a.exec();
 }

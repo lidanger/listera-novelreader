@@ -1,4 +1,5 @@
 #include "mainwindow.h"
+#include "readerconfig.h"
 #include <DTitlebar>
 #include <QApplication>
 #include <DApplication>
@@ -76,13 +77,48 @@ void MainWindow::init_ui()
 
     // 菜单 文件 书签 选项 视图 帮助
     auto topmenu = new DMenu(titlebar);
-    topmenu->addMenu("文件");
-    topmenu->addMenu("书签");
-    topmenu->addMenu("选项");
-    topmenu->addMenu("视图");
-    topmenu->addMenu("帮助");
-    topmenu->addSeparator();
     titlebar->setMenu(topmenu);
+
+    auto filemenu = topmenu->addMenu(tr("File"));
+    filemenu->addAction(tr("Import File..."));
+    filemenu->addAction(tr("Import Directory..."));
+    filemenu->addAction(tr("Reading History..."));
+
+    auto bmenu = topmenu->addMenu(tr("Bookmark"));
+    bmenu->addAction(tr("Add Bookmark"));
+    bmenu->addAction(tr("Open Bookmark"));
+    bmenu->addAction(tr("Remove Bookmark"));
+    bmenu->addAction(tr("Clear Bookmark"));
+    bmenu->addSeparator();
+    bmenu->addAction(tr("View TOC"));
+
+    auto opmenu = topmenu->addMenu(tr("Options"));
+    opmenu->addAction(tr("Font"));
+    opmenu->addAction(tr("Line Space"));
+    opmenu->addAction(tr("Background Color"));
+    opmenu->addAction(tr("Font Size"));
+    opmenu->addAction(tr("Font Color"));
+    opmenu->addAction(tr("Paging Mode"));
+    opmenu->addSeparator();
+    opmenu->addAction(tr("Dark Mode"));
+    opmenu->addSeparator();
+    opmenu->addAction(tr("Advanced Options"));
+
+    auto viewmenu = topmenu->addMenu(tr("View"));
+    viewmenu->addAction(tr("Toolbar"));
+    viewmenu->addAction(tr("Statusbar"));
+    viewmenu->addAction(tr("Sidebar"));
+    viewmenu->addSeparator();
+    viewmenu->addAction(tr("Full Screen"));
+    viewmenu->addSeparator();
+    viewmenu->addAction(tr("Auto Scrolling"));
+    viewmenu->addAction(tr("Jump to Ratio"));
+
+    auto helpmenu = topmenu->addMenu(tr("Help"));
+    helpmenu->addAction(tr("Instructions"));
+    helpmenu->addAction(tr("Feedback"));
+
+    topmenu->addSeparator();
 
     // 工具栏，可选显示，所有功能都可以通过快捷键来
     auto toolbar = new DToolBar(this);
@@ -92,7 +128,6 @@ void MainWindow::init_ui()
     test->setText("测试");
     toolbar->addWidget(test);
     toolbar->setWindowTitle("工具栏");
-
 
     // 状态栏 总章 当前章 上一页 下一页 翻屏
     auto statusbar = new DStatusBar(this);
@@ -132,7 +167,7 @@ void MainWindow::init_ui()
     statusbar->addPermanentWidget(next_page);
 
     // 内容区
-    _content = new DTextEdit(this);
+    _content = new TextContent(this);
     this->setCentralWidget(_content);
 
     _content->setReadOnly(true);
@@ -157,6 +192,7 @@ void MainWindow::init_ui()
     _booklist->item(0)->setSizeHint(QSize(100, 30));
 
     //_ldock->installEventFilter(this);
+    this->installEventFilter(this);
 }
 
 void MainWindow::init_shortcuts()
@@ -169,6 +205,10 @@ void MainWindow::init_shortcuts()
     keyList.append(QKeySequence::Copy);
     keyList.append(QKeySequence(Qt::Key_Left));
     keyList.append(QKeySequence(Qt::Key_Right));
+    keyList.append(QKeySequence(Qt::Key_Up));
+    keyList.append(QKeySequence(Qt::Key_Down));
+    keyList.append(QKeySequence(Qt::Key_PageUp));
+    keyList.append(QKeySequence(Qt::Key_PageDown));
     keyList.append(QKeySequence(Qt::Key_Space));
     keyList.append(QKeySequence(Qt::Key_Escape));
     keyList.append(QKeySequence(Qt::Key_F5));
@@ -211,6 +251,14 @@ void MainWindow::init_shortcuts()
 
 bool MainWindow::eventFilter(QObject *target, QEvent *event)
 {
+    if(event->type() == QEvent::Resize)
+    {
+        if(target == this)
+        {
+            ReaderConfig::Instance()->setWindowSize(this->size());
+        }
+    }
+
     // 处理其他消息
     return QWidget::eventFilter(target, event);
 }
