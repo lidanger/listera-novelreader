@@ -12,7 +12,11 @@ SOURCES += \
     mainwindow.cpp \
     application.cpp \
     textcontent.cpp \
-    readerconfig.cpp
+    readerconfig.cpp \
+    readinghistory.cpp \
+    bookcontents.cpp \
+    advancedoptions.cpp \
+    jumpratio.cpp
 
 RESOURCES +=         resources.qrc
 
@@ -22,4 +26,8 @@ HEADERS += \
     mainwindow.h \
     application.h \
     textcontent.h \
-    readerconfig.h
+    readerconfig.h \
+    readinghistory.h \
+    bookcontents.h \
+    advancedoptions.h \
+    jumpratio.h

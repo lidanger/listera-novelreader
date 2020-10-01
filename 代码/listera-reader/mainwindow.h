@@ -19,6 +19,16 @@ public:
 private slots:
     void on_sidebar_clicked();
 
+    void import_file();
+    void import_directory();
+
+    void show_history();
+    void view_book_contents();
+    void show_advanced_options();
+    void show_jump_ratio();
+
+    void booklist_currentRowChanged(int currentRow);
+
 private:
     void init_ui();
     //  初始化快捷键操作

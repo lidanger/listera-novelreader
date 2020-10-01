@@ -1,5 +1,9 @@
+#include "advancedoptions.h"
+#include "bookcontents.h"
+#include "jumpratio.h"
 #include "mainwindow.h"
 #include "readerconfig.h"
+#include "readinghistory.h"
 #include <DTitlebar>
 #include <QApplication>
 #include <DApplication>
@@ -16,6 +20,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QResizeEvent>
+#include <DFileDialog>
 
 MainWindow::MainWindow()
     : DMainWindow()
@@ -26,6 +31,80 @@ MainWindow::MainWindow()
 void MainWindow::on_sidebar_clicked()
 {
     _ldock->setVisible(!_ldock->isVisible());
+}
+
+void MainWindow::import_file()
+{
+    auto lst = DFileDialog::getOpenFileNames(this, "选择文件", ".", "Text Files (*.txt)");
+    if(lst.empty())
+        return;
+
+    for(auto it = lst.begin(); it != lst.end(); it++)
+    {
+        QFileInfo fi(*it);
+
+        auto item = new QListWidgetItem(fi.baseName(), _booklist);
+        item->setData(Qt::UserRole, fi.absolutePath());
+        item->setSizeHint(QSize(100, 30));
+        _booklist->addItem(item);
+    }
+}
+
+void MainWindow::import_directory()
+{
+    auto dirpath = DFileDialog::getExistingDirectory(this, "选择文件", ".");
+    if(dirpath.isEmpty())
+        return;
+
+    auto dir = QDir(dirpath);
+    dir.setFilter(QDir::Files);
+    dir.setNameFilters(QString("*.txt;").split(";"));
+    auto lst = dir.entryList();
+
+    for(auto it = lst.begin(); it != lst.end(); it++)
+    {
+        QFileInfo fi(*it);
+
+        auto item = new QListWidgetItem(fi.baseName(), _booklist);
+        item->setData(Qt::UserRole, fi.absolutePath());
+        item->setSizeHint(QSize(100, 30));
+        _booklist->addItem(item);
+    }
+}
+
+void MainWindow::show_history()
+{
+    ReadingHistory dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::view_book_contents()
+{
+    BookContents dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::show_advanced_options()
+{
+    AdvancedOptions dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::show_jump_ratio()
+{
+    JumpRatio dlg(this);
+    dlg.exec();
+}
+
+void MainWindow::booklist_currentRowChanged(int currentRow)
+{
+    // 获取文件路径
+    auto item = _booklist->item(currentRow);
+    auto filepath = item->data(Qt::UserRole).toString();
+
+    // 分页
+
+    // 加载页
 }
 
 void MainWindow::init_ui()
@@ -57,6 +136,7 @@ void MainWindow::init_ui()
     auto toc = new DToolButton(titlebar);
     toc->setText("目录");
     titlebar->addWidget(toc, Qt::AlignRight);
+    connect(toc, SIGNAL(clicked()), this, SLOT(view_book_contents()));
 
     // 添加书签
     auto mark = new DToolButton(titlebar);
@@ -72,7 +152,6 @@ void MainWindow::init_ui()
     auto sidebar = new DToolButton(titlebar);
     sidebar->setText("书库");
     titlebar->addWidget(sidebar, Qt::AlignRight);
-
     connect(sidebar, SIGNAL(clicked()), this, SLOT(on_sidebar_clicked()));
 
     // 菜单 文件 书签 选项 视图 帮助
@@ -80,9 +159,10 @@ void MainWindow::init_ui()
     titlebar->setMenu(topmenu);
 
     auto filemenu = topmenu->addMenu(tr("File"));
-    filemenu->addAction(tr("Import File..."));
-    filemenu->addAction(tr("Import Directory..."));
-    filemenu->addAction(tr("Reading History..."));
+    connect(filemenu->addAction(tr("Import File...")), SIGNAL(triggered()), this, SLOT(import_file()));
+    connect(filemenu->addAction(tr("Import Directory...")), SIGNAL(triggered()), this, SLOT(import_directory()));
+    filemenu->addSeparator();
+    connect(filemenu->addAction(tr("Reading History...")), SIGNAL(triggered()), this, SLOT(show_history()));
 
     auto bmenu = topmenu->addMenu(tr("Bookmark"));
     bmenu->addAction(tr("Add Bookmark"));
@@ -90,7 +170,7 @@ void MainWindow::init_ui()
     bmenu->addAction(tr("Remove Bookmark"));
     bmenu->addAction(tr("Clear Bookmark"));
     bmenu->addSeparator();
-    bmenu->addAction(tr("View TOC"));
+    connect(bmenu->addAction(tr("View Book Contents")), SIGNAL(triggered()), this, SLOT(view_book_contents()));
 
     auto opmenu = topmenu->addMenu(tr("Options"));
     opmenu->addAction(tr("Font"));
@@ -102,17 +182,17 @@ void MainWindow::init_ui()
     opmenu->addSeparator();
     opmenu->addAction(tr("Dark Mode"));
     opmenu->addSeparator();
-    opmenu->addAction(tr("Advanced Options"));
+    connect(opmenu->addAction(tr("Advanced Options")), SIGNAL(triggered()), this, SLOT(show_advanced_options()));
 
     auto viewmenu = topmenu->addMenu(tr("View"));
     viewmenu->addAction(tr("Toolbar"));
     viewmenu->addAction(tr("Statusbar"));
     viewmenu->addAction(tr("Sidebar"));
     viewmenu->addSeparator();
-    viewmenu->addAction(tr("Full Screen"));
+    connect(viewmenu->addAction(tr("Full Screen")), SIGNAL(triggered()), this, SLOT(showFullScreen()));
     viewmenu->addSeparator();
     viewmenu->addAction(tr("Auto Scrolling"));
-    viewmenu->addAction(tr("Jump to Ratio"));
+    connect(viewmenu->addAction(tr("Jump to Ratio")), SIGNAL(triggered()), this, SLOT(show_jump_ratio()));
 
     auto helpmenu = topmenu->addMenu(tr("Help"));
     helpmenu->addAction(tr("Instructions"));
@@ -185,11 +265,7 @@ void MainWindow::init_ui()
 
     _booklist = new DListWidget(_ldock);
     _ldock->setWidget(_booklist);
-
-    _booklist->addItem("test");
-    _booklist->addItem("test2");
-
-    _booklist->item(0)->setSizeHint(QSize(100, 30));
+    connect(_booklist, SIGNAL(currentRowChanged(int)), this, SLOT(booklist_currentRowChanged(int)));
 
     //_ldock->installEventFilter(this);
     this->installEventFilter(this);
@@ -256,6 +332,14 @@ bool MainWindow::eventFilter(QObject *target, QEvent *event)
         if(target == this)
         {
             ReaderConfig::Instance()->setWindowSize(this->size());
+        }
+    }
+    else if(event->type() == QEvent::KeyPress)
+    {
+        auto keve = static_cast<QKeyEvent*>(event);
+        if(keve->key() == Qt::Key_Escape)
+        {
+            this->showNormal();
         }
     }
 
