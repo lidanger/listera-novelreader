@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Actions=new-window;
+Categories=Utility;TextEditor;
+Exec=/usr/bin/listera-reader
+TryExec=/usr/bin/listera-reader
+Name=Listera Reader
+Name[zh_CN]=听雨小说阅读器
+GenericName=Listera Reader
+GenericName[zh_CN]=听雨小说阅读器
+Comment=txt format novel reader
+Icon=listera-reader.png
+Keywords=Novel;Reader;Text;Documents;
+NoDisplay=false
+StartupNotify=true
+Terminal=false
+DBusActivatable=false
