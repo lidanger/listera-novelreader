@@ -22,7 +22,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION} 
     SOVERSION 1
     OUTPUT_NAME ${PROJECT_NAME}
-    AUTOMOC ON)
+    AUTOMOC ON
+    AUTORCC ON)
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Core Qt5::Gui 
     dtkcore dtkgui dtkwidget)

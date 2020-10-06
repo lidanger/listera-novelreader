@@ -7,6 +7,10 @@
         <source>A txt novel reader.</source>
         <translation>一个 txt 小说阅读器.</translation>
     </message>
+    <message>
+        <source>Listera Reader</source>
+        <translation>听雨小说阅读器</translation>
+    </message>
 </context>
 <context>
     <name>BookContents</name>

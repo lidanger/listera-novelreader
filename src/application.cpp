@@ -13,18 +13,18 @@ Application::Application(int &argc, char **argv)
 {
     this->setAttribute(Qt::AA_UseHighDpiPixmaps);
 
+    // 国际化
+    this->loadTranslator();
+
     this->setOrganizationName("listera");
     this->setApplicationName("listera-reader");
     this->setApplicationVersion("1.0");
     this->setProductIcon(QIcon(":/images/logo.png"));
-    this->setProductName("听雨小说阅读器");
+    this->setProductName(tr("Listera Reader"));
     this->setApplicationDescription(tr("A txt novel reader."));
     this->setApplicationHomePage("https://www.listera.top");
 
     this->setSingleInstance("listera-reader_20200930");
-
-    // 国际化
-    this->loadTranslator();
 
 #ifdef QT_DEBUG
     QTranslator trans;

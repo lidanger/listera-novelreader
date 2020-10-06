@@ -7,6 +7,8 @@ DWIDGET_USE_NAMESPACE
 
 class Application : public DApplication
 {
+    Q_OBJECT
+
 public:
     Application(int &argc, char **argv);
 
