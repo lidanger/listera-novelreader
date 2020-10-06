@@ -47,6 +47,11 @@ endif()
 #include(${QT_USE_FILE})
 add_definitions(${QT_DEFINITIONS})
 
+add_custom_command(TARGET ${PROJECT_NAME}
+    PRE_LINK
+    COMMAND lrelease *.ts
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/translations)
+
 # export targets
 
 set(RESOURCE_FILES
