@@ -1,7 +1,7 @@
 [Desktop Entry]
 Type=Application
 Actions=new-window;
-Categories=Utility;TextEditor;
+Categories=Viewer;Text;Reader;Novel;
 Exec=/usr/bin/listera-reader
 TryExec=/usr/bin/listera-reader
 Name=Listera Reader
