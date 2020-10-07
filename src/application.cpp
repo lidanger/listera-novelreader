@@ -18,7 +18,7 @@ Application::Application(int &argc, char **argv)
 
     this->setOrganizationName("listera");
     this->setApplicationName("listera-reader");
-    this->setApplicationVersion("1.0");
+    this->setApplicationVersion("1.0.1.2");
     this->setProductIcon(QIcon(":/images/logo.png"));
     this->setProductName(tr("Listera Reader"));
     this->setApplicationDescription(tr("A txt novel reader."));
