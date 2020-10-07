@@ -12,22 +12,20 @@
 
    ```bash
    cd src
-   
    qmake
-   
    make
    ```
-
+   
    或
 
    ```bash
-   mkdir build
+mkdir build
    cd build
    cmake .. -DCMAKE_BUILD_TYPE=release
    make
    make package
    ```
-
+   
    
 
 2. 安装
