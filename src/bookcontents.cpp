@@ -70,7 +70,7 @@ void BookContents::toc_list_currentRowChanged(int currentRow)
     if(!file.exists())
         return;
 
-    if(!file.open(QFile::ReadOnly | QFile::Text))
+    if(!file.open(QFile::ReadOnly))
         return;
 
     file.seek(pos);

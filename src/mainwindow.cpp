@@ -113,7 +113,7 @@ void MainWindow::view_book_contents()
         return;
     }
 
-    if(!file.open(QIODevice::ReadOnly|QIODevice::Text))
+    if(!file.open(QIODevice::ReadOnly))
     {
         return;
     }
@@ -209,6 +209,10 @@ void MainWindow::booklist_currentRowChanged(int currentRow)
         if(_current_page < _toc_indexs.size() - 1)
             pageend = _toc_indexs[_toc_names[_current_page + 1]];
 
+        file.close();
+        if(!file.open(QIODevice::ReadOnly))
+            return;
+
         file.seek(pagebegin);
         auto content = file.read(pageend - pagebegin);
         auto txt = _codec->toUnicode(content);
@@ -245,7 +249,7 @@ void MainWindow::previous_page_pressed()
         return;
     }
 
-    if(!file.open(QIODevice::ReadOnly|QIODevice::Text))
+    if(!file.open(QIODevice::ReadOnly))
     {
         return;
     }
@@ -284,7 +288,7 @@ void MainWindow::next_page_pressed()
         return;
     }
 
-    if(!file.open(QIODevice::ReadOnly|QIODevice::Text))
+    if(!file.open(QIODevice::ReadOnly))
     {
         return;
     }
@@ -344,7 +348,7 @@ void MainWindow::current_page_edit_returnPressed()
         return;
     }
 
-    if(!file.open(QIODevice::ReadOnly|QIODevice::Text))
+    if(!file.open(QIODevice::ReadOnly))
     {
         return;
     }
