@@ -4,8 +4,6 @@
 听雨小说阅读器是一个 txt 小说阅读器，软件基于 Qt5 和 Dtk5 开发，目前只完成了基本功能。
 
 
-
-
 #### 安装教程
 
 1. 编译
@@ -19,13 +17,12 @@
    或
 
    ```bash
-mkdir build
+   mkdir build
    cd build
    cmake .. -DCMAKE_BUILD_TYPE=release
    make
    make package
    ```
-   
    
 
 2. 安装
@@ -40,7 +37,6 @@ mkdir build
    sudo apt install ./*.deb
    ```
 
-   
 
 #### 使用说明
 
