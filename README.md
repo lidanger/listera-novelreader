@@ -1,4 +1,4 @@
-# Listera Reader——听雨小说阅读器
+## Listera NovelReader——听雨小说阅读器
 
 听雨小说阅读器是一个 txt 小说阅读器，基于 Qt5 和 Dtk5 开发。目前只完成了基本功能。
 
