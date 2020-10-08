@@ -72,7 +72,7 @@ file(GLOB DESKTOP_FILES resources/*.desktop)
 install(FILES ${DESKTOP_FILES} 
     DESTINATION share/applications)
 
-install(FILES resources/images/logo.png
+install(FILES resources/images/logo_d.png
     DESTINATION share/icons/hicolor/128x128/apps
     RENAME ${PROJECT_NAME}.png)
 

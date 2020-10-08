@@ -24,6 +24,7 @@
 #include <QFontDialog>
 #include <QColorDialog>
 #include <QDesktopServices>
+#include <QScrollBar>
 
 MainWindow::MainWindow()
     : DMainWindow()
@@ -547,6 +548,7 @@ void MainWindow::show_full_screen()
     this->showFullScreen();
     _ldock->hide();
     _toolbar->hide();
+    this->setFocus();
 }
 
 void MainWindow::set_auto_scrolling()
