@@ -10,8 +10,6 @@ int main(int argc, char *argv[])
 {
     DApplication::loadDXcbPlugin();
 
-    Application::setMessageLogging();
-
     Application a(argc, argv);
 
     DApplicationSettings savetheme;

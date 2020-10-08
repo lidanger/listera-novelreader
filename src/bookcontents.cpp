@@ -7,12 +7,9 @@
 #include <QTextBrowser>
 #include <QTextCodec>
 
-BookContents::BookContents(QString file_path, QTextCodec *codec, QList<QString> toc_names, QMap<QString, qint64> toc_indexs, int current_index, QWidget *parent)
-    :DDialog (parent)
+BookContents::BookContents(BookBrowser *browser, QWidget *parent)
+    :DDialog (parent), _browser(browser)
 {
-    _file_path = file_path;
-    _codec = codec;
-
     this->setFixedSize(800, 500);
     this->setWindowTitle(tr("View Book Contents"));
 
@@ -35,13 +32,11 @@ BookContents::BookContents(QString file_path, QTextCodec *codec, QList<QString> 
     connect(_toc_list, SIGNAL(currentRowChanged(int)), this, SLOT(toc_list_currentRowChanged(int)));
     connect(_toc_list, SIGNAL(itemDoubleClicked(QListWidgetItem *)), this, SLOT(toc_list_itemDoubleClicked(QListWidgetItem *)));
 
-    foreach(QString name, toc_names)
+    foreach(QString name, _browser->pageTitles())
     {
         auto item = new QListWidgetItem(name, _toc_list);
         item->setSizeHint(QSize(100, 30));
         _toc_list->addItem(item);
-
-        item->setData(Qt::UserRole, toc_indexs[name]);
     }
 
     auto preview_group = new QGroupBox(tr("Preview"), this);
@@ -55,7 +50,7 @@ BookContents::BookContents(QString file_path, QTextCodec *codec, QList<QString> 
     preview_layout->addWidget(_preview_text);
 
     // 预览
-    _toc_list->setCurrentRow(current_index);
+    _toc_list->setCurrentRow(_browser->currentPage());
 }
 
 void BookContents::toc_list_currentRowChanged(int currentRow)
@@ -64,28 +59,17 @@ void BookContents::toc_list_currentRowChanged(int currentRow)
     if(item == nullptr)
         return;
 
-    auto pos = item->data(Qt::UserRole).toLongLong();
-
-    QFile file(_file_path);
-    if(!file.exists())
-        return;
-
-    if(!file.open(QFile::ReadOnly))
-        return;
-
-    file.seek(pos);
-    auto content = file.read(800);
-
-    auto txt = _codec->toUnicode(content) + "......\n";
+    auto txt = _browser->pagePreview(currentRow) + "......\n";
     _preview_text->setText(txt);
-
-    file.close();
 }
 
 void BookContents::toc_list_itemDoubleClicked(QListWidgetItem *item)
 {
-    _toc_item = item->text();
-    _toc_item_index = _toc_list->row(item);
+    auto row = _toc_list->row(item);
+    if(row != -1)
+    {
+        _browser->moveToPage(row);
+    }
 
-    this->close();
+    this->accept();
 }

@@ -32,15 +32,26 @@ class ReaderConfig
         sets.endGroup();                                                          \
     })
 
+#define _removeKey(groupname, keyname)                                            \
+    ({                                                                            \
+        QSettings sets(_org_name, _app_name);                                     \
+        sets.beginGroup(groupname);                                               \
+        sets.remove(keyname);                                                     \
+        sets.endGroup();                                                          \
+    })
+
 public:
     static ReaderConfig *Instance() { return _inst == nullptr ? new ReaderConfig() : _inst; }
 
 public:
-    // 书籍阅读
+    // 书库
     void addBook(QString book_path);
     inline QStringList bookNames() { return _getKeys("Library"); }
     inline QString bookPath(QString book_name) { return _getValue("Library", book_name).toString(); }
+    inline void removeBook(QString book_name) { _removeKey("Library", book_name); }
+    inline void clearBooks() { _removeKey("Library", ""); }
 
+    // 书籍阅读
     void setCurrentBook(QString book_name);
     inline QString currentBook() { return _getValue("Reading", "CurrentBook").toString(); }
 
@@ -52,6 +63,8 @@ public:
 
     void addBookmark(QString book_name, int page);
     inline QStringList bookmarks() { return _getKeys("Bookmark"); }
+    inline void removeBookmark(QString key) { _removeKey("Bookmark", key); }
+    inline void clearBookmarks() { _removeKey("Bookmark", ""); }
 
     // 窗口状态
     inline void setWindowState(int state) { _setValue("Window", "State", state); }
@@ -96,6 +109,10 @@ public:
 
     inline void setReadingDarkMode(int state) { _setValue("Reading", "DarkMode", state); }
     inline int readingDarkMode() { return _getValue("Reading", "DarkMode").toInt(); }
+
+    // 快捷键
+    inline void setShortcut(QString function_name, QString keys) { _setValue("Shotcuts", function_name, keys); }
+    inline QString shortcutKeys(QString function_name) { return _getValue("Shotcuts", function_name).toString(); }
 
 private:
     ReaderConfig();

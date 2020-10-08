@@ -13,27 +13,33 @@ Application::Application(int &argc, char **argv)
 {
     this->setAttribute(Qt::AA_UseHighDpiPixmaps);
 
+    // 相关信息
+    this->setOrganizationName("listera");
+    this->setApplicationName("listera-novelreader");
+    this->setApplicationVersion("1.0.1.2");
+    this->setProductIcon(QIcon(":/images/logo.png"));
+    this->setApplicationHomePage("https://www.listera.top");
+
     // 国际化
     this->loadTranslator();
 
-    this->setOrganizationName("listera");
-    this->setApplicationName("listera-reader");
-    this->setApplicationVersion("1.0.1.2");
-    this->setProductIcon(QIcon(":/images/logo.png"));
-    this->setProductName(tr("Listera Reader"));
-    this->setApplicationDescription(tr("A txt novel reader."));
-    this->setApplicationHomePage("https://www.listera.top");
-
-    this->setSingleInstance("listera-reader_20200930");
-
 #ifdef QT_DEBUG
     QTranslator trans;
-    if(trans.load(QLocale(), "listera-reader", "_", QDir::currentPath(), ".qm"))
+    if(trans.load(QLocale(), this->applicationName(), "_", QDir::currentPath(), ".qm"))
     {
         qDebug() << "load qm" << QLocale() << endl;
         this->installTranslator(&trans);
     }
 #endif
+
+    this->setProductName(tr("Listera NodelReader"));
+    this->setApplicationDescription(tr("A Chinese novel reader for txt files."));
+
+    // 开启日志记录
+    Application::setMessageLogging();
+
+    // 单实例
+    this->setSingleInstance("listera-novelreader_20200930");
 }
 
 void Application::setMessageLogging()

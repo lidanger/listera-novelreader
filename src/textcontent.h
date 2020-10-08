@@ -11,8 +11,6 @@ class TextContent : public DTextEdit
 
 public:
     TextContent(QWidget *parent = nullptr);
-
-    TextContent(const QString& text, QWidget* parent = nullptr);
 };
 
 #endif // TEXTCONTENT_H

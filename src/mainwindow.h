@@ -1,11 +1,13 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "bookbrowser.h"
 #include "textcontent.h"
 
 #include <DMainWindow>
 #include <DDockWidget>
 #include <DListView>
+#include <QTimer>
 
 DWIDGET_USE_NAMESPACE
 
@@ -16,16 +18,23 @@ class MainWindow : public DMainWindow
 public:
     MainWindow();
 
+private:
+    void make_ui();
+    void init_ui();
+    void init_shortcuts();
+    void init_data();
+    void init_others();
+
 private slots:
-    void on_sidebar_clicked();
+    void library_clicked();
+    void add_bookmark_clicked();
 
     void import_file();
     void import_directory();
+    void remove_novel();
 
-    void show_history();
-    void view_book_contents();
-    void show_advanced_options();
-    void show_jump_ratio();
+    void show_bookmarks();
+    void view_contents_clicked();
 
     void booklist_currentRowChanged(int currentRow);
 
@@ -34,40 +43,44 @@ private slots:
     void next_screen_pressed();
     void current_page_edit_returnPressed();
 
+    void view_shotcuts();
+
+    void booklist_customContextMenuRequested(const QPoint &pos);
+
+    void select_font();
+    void select_font_color();
+    void select_background_color();
+    void show_dark_mode();
+    void show_full_screen();
+    void set_auto_scrolling();
+    void autoscroll_timer_timeout();
+
+    void view_instructions();
+    void send_feedback();
+
 private:
-    void init_ui();
-
-    void init_shortcuts();
-
-    void displayShortcuts();
-
     bool eventFilter(QObject *target, QEvent *event);
 
-    void init_data();
+    void closeEvent(QCloseEvent *event);
 
 private:
     DDockWidget *_ldock;
     DListWidget *_booklist;
     TextContent *_content;
+    DToolBar *_toolbar;
 
     QLineEdit *_current_page_edit;
     QLineEdit *_total_pages_edit;
 
-    QTextCodec *_codec;
-    QMap<QString, qint64> _toc_indexs;
-    QList<QString> _toc_names;
-    int _current_page;
-    QString _current_book;
+    QMenu *_reading_history_menu;
+    QMenu *_booklist_menu;
 
-    // action 名称->hotkeys
-    QMap<QString, QString> _hotkeys;
+    BookBrowser *_browser;
 
-private:
-    const QString hotkey_next_page = "Right";
-    const QString hotkey_previous_page = "Left";
-    const QString hotkey_next_screen = "PgDown";
-    const QString hotkey_previous_screen = "PgUp";
-    const QString hotkey_next_screen2 = "Space";
+    QByteArray _state_before_fullscreen;
+    Qt::WindowStates _window_state_before_fullscreen;
+
+    QTimer *_autoscroll_timer;
 };
 
 #endif // MAINWINDOW_H

@@ -1,9 +1,10 @@
-#include "advancedoptions.h"
 #include "bookcontents.h"
-#include "jumpratio.h"
 #include "mainwindow.h"
 #include "readerconfig.h"
-#include "readinghistory.h"
+#include "bookmarks.h"
+#include "bookbrowser.h"
+#include "readersettings.h"
+#include "utils.h"
 #include <DTitlebar>
 #include <DToolButton>
 #include <DToolBar>
@@ -19,18 +20,280 @@
 #include <DFileDialog>
 #include <DAboutDialog>
 #include <DApplication>
-#include "utils.h"
 #include <QTextBlock>
+#include <QFontDialog>
+#include <QColorDialog>
+#include <QDesktopServices>
 
 MainWindow::MainWindow()
     : DMainWindow()
 {
+    make_ui();
     init_ui();
     init_shortcuts();
     init_data();
+    init_others();
 }
 
-void MainWindow::on_sidebar_clicked()
+void MainWindow::make_ui()
+{
+    // 窗口
+    this->setMinimumSize(1000, 600);
+    this->installEventFilter(this);
+
+    // 关于
+    auto about = new DAboutDialog(this);
+    auto app = static_cast<DApplication*>(QApplication::instance());
+    app->setAboutDialog(about);
+
+    about->setVersion(app->applicationVersion());
+    about->setCompanyLogo(QPixmap(":/images/logo_3.png").scaledToWidth(150));
+    about->setDescription(app->applicationDescription());
+    about->setProductIcon(app->productIcon());
+    about->setProductName(app->productName());
+    about->setWebsiteLink(app->applicationHomePage());
+    about->setWebsiteName("www.listera.top");
+
+    // 标题栏
+    auto titlebar = this->titlebar();
+    titlebar->setObjectName("titlebar");
+    titlebar->setAutoHideOnFullscreen(true);
+    titlebar->setIcon(app->productIcon());
+    titlebar->setTitle(app->productName());
+
+    auto toc = new DToolButton(titlebar);
+    toc->setText(tr("View Contents"));
+    titlebar->addWidget(toc, Qt::AlignRight);
+    connect(toc, SIGNAL(clicked()), this, SLOT(view_contents_clicked()));
+
+    auto mark = new DToolButton(titlebar);
+    mark->setText(tr("Add BookMark"));
+    titlebar->addWidget(mark, Qt::AlignRight);
+    connect(mark, SIGNAL(clicked()), this, SLOT(add_bookmark_clicked()));
+
+    auto sidebar = new DToolButton(titlebar);
+    sidebar->setText(tr("Book Library"));
+    titlebar->addWidget(sidebar, Qt::AlignRight);
+    connect(sidebar, SIGNAL(clicked()), this, SLOT(library_clicked()));
+
+    // 主菜单
+    auto topmenu = new DMenu(titlebar);
+    titlebar->setMenu(topmenu);
+
+    _reading_history_menu = topmenu->addMenu(tr("Reading History"));
+    topmenu->addAction(tr("Bookmarks"), this, SLOT(show_bookmarks()));
+    topmenu->addSeparator();
+    topmenu->addAction(tr("Instructions"), this, SLOT(view_instructions()));
+    topmenu->addAction(tr("Feedback"), this, SLOT(send_feedback()));
+    topmenu->addSeparator();
+    topmenu->addAction(tr("Settings"), this, SLOT(view_shotcuts()));
+    topmenu->addSeparator();
+
+    // 工具栏
+    _toolbar = new DToolBar(this);
+    this->addToolBar(Qt::TopToolBarArea, _toolbar);
+
+    _toolbar->setObjectName("toolbar");
+    _toolbar->setWindowTitle(tr("Toolbar"));
+    _toolbar->hide();
+
+    _toolbar->addAction(tr("Font"), this, SLOT(select_font()));
+    _toolbar->addAction(tr("Font Color"), this, SLOT(select_font_color()));
+    _toolbar->addAction(tr("Background Color"), this, SLOT(select_background_color()));
+    _toolbar->addAction(tr("Dark Mode"), this, SLOT(show_dark_mode()));
+
+    _toolbar->addWidget(new QLabel(tr("Line Space:"), _toolbar));
+
+    auto linespace = new QLineEdit(_toolbar);
+    _toolbar->addWidget(linespace);
+
+    linespace->setObjectName("linespace");
+    linespace->setPlaceholderText(tr("Line Space"));
+    linespace->setFixedWidth(60);
+    linespace->installEventFilter(this);
+
+    _toolbar->addSeparator();
+    _toolbar->addAction(tr("Full Screen"), this, SLOT(show_full_screen()));
+    _toolbar->addSeparator();
+    _toolbar->addAction(tr("Auto Scrolling"), this, SLOT(set_auto_scrolling()))->setObjectName("set_auto_scrolling");
+    _toolbar->addSeparator();
+
+    _toolbar->addWidget(new QLabel(tr("Jump to Ratio:"), _toolbar));
+
+    auto jumptoratio = new QLineEdit(_toolbar);
+    _toolbar->addWidget(jumptoratio);
+
+    jumptoratio->setObjectName("jumptoratio");
+    jumptoratio->setPlaceholderText(tr("Ratio"));
+    jumptoratio->setFixedWidth(60);
+    jumptoratio->installEventFilter(this);
+
+    _toolbar->addWidget(new QLabel("%", _toolbar));
+
+    // 状态栏
+    auto statusbar = new DStatusBar(this);
+    this->setStatusBar(statusbar);
+
+    statusbar->setObjectName("statusbar");
+    statusbar->setFixedHeight(30);
+    statusBar()->setStyleSheet(QString( "QStatusBar::item{border: 0px}"));
+
+    auto total_label = new QLabel(statusbar);
+    total_label->setText(tr("Total Pages"));
+    statusbar->addPermanentWidget(total_label);
+
+    _total_pages_edit = new QLineEdit(statusbar);
+    statusbar->addPermanentWidget(_total_pages_edit);
+    _total_pages_edit->setFixedWidth(50);
+    _total_pages_edit->setReadOnly(true);
+    _total_pages_edit->setFocusPolicy(Qt::NoFocus);
+
+    auto current_label = new QLabel(statusbar);
+    current_label->setText(tr("Current Page"));
+    statusbar->addPermanentWidget(current_label);
+
+    _current_page_edit = new QLineEdit(statusbar);
+    statusbar->addPermanentWidget(_current_page_edit);
+    _current_page_edit->setFixedWidth(50);
+    connect(_current_page_edit, SIGNAL(returnPressed()), this, SLOT(current_page_edit_returnPressed()));
+
+    auto previous_page = new DToolButton(statusbar);
+    previous_page->setText(tr("Previous Page"));
+    statusbar->addPermanentWidget(previous_page);
+    connect(previous_page, SIGNAL(pressed()), this, SLOT(previous_page_pressed()));
+    previous_page->setShortcut(QKeySequence(Qt::Key_Left));
+
+    auto next_screen = new DToolButton(statusbar);
+    next_screen->setText(tr("Next Screen"));
+    statusbar->addPermanentWidget(next_screen);
+    connect(next_screen, SIGNAL(pressed()), this, SLOT(next_screen_pressed()));
+    next_screen->setShortcut(QKeySequence(Qt::Key_Space));
+
+    auto next_page = new DToolButton(statusbar);
+    next_page->setText(tr("Next Page"));
+    statusbar->addPermanentWidget(next_page);
+    connect(next_page, SIGNAL(pressed()), this, SLOT(next_page_pressed()));
+    next_page->setShortcut(QKeySequence(Qt::Key_Right));
+
+    // 侧栏
+    _ldock = new QDockWidget(this);
+    this->addDockWidget(Qt::LeftDockWidgetArea, _ldock);
+    _ldock->setObjectName("leftdock");
+    _ldock->setMinimumWidth(150);
+    _ldock->setMaximumWidth(500);
+
+    _ldock->setWindowTitle(tr("Library"));
+    _ldock->setFeatures(QDockWidget::DockWidgetVerticalTitleBar);
+    //_ldock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    _ldock->installEventFilter(this);
+
+    _booklist = new DListWidget(_ldock);
+    _ldock->setWidget(_booklist);
+
+    connect(_booklist, SIGNAL(currentRowChanged(int)), this, SLOT(booklist_currentRowChanged(int)));
+    _booklist->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(_booklist, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(booklist_customContextMenuRequested(const QPoint &)));
+
+    _booklist_menu = new QMenu(_booklist);
+    _booklist_menu->addAction(tr("Import File..."), this, SLOT(import_file()));
+    _booklist_menu->addAction(tr("Import Directory..."), this, SLOT(import_directory()));
+    _booklist_menu->addSeparator();
+    _booklist_menu->addAction(tr("Remove"), this, SLOT(remove_novel()));
+
+    // 内容区
+    _content = new TextContent(this);
+    this->setCentralWidget(_content);
+
+    _content->setReadOnly(true);
+    _content->setMinimumWidth(300);
+    _content->setFocusPolicy(Qt::NoFocus);
+    _content->setFontPointSize(12);
+}
+
+void MainWindow::init_ui()
+{
+    this->resize(ReaderConfig::Instance()->windowSize());
+    this->setWindowState(static_cast<Qt::WindowState>(ReaderConfig::Instance()->windowState()));
+
+    auto width = ReaderConfig::Instance()->sidebarWidth();
+    if(width == 0)
+        width = _ldock->minimumWidth();
+    this->resizeDocks({_ldock}, {width}, Qt::Horizontal);
+}
+
+void MainWindow::init_shortcuts()
+{
+    // 标题栏按钮
+    auto topbar_actions = this->titlebar()->findChildren<QToolButton*>();
+    foreach(QToolButton *action, topbar_actions)
+    {
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        if(shortcut.isEmpty())
+            continue;
+
+        action->setShortcut(shortcut);
+    }
+
+    // 工具栏
+    auto toolbar_actions = _toolbar->findChildren<QToolButton*>();
+    foreach(QToolButton *action, toolbar_actions)
+    {
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        if(shortcut.isEmpty())
+            continue;
+
+        action->setShortcut(shortcut);
+    }
+
+    // 状态栏
+    auto statusbar_actions = this->statusBar()->findChildren<QToolButton*>();
+    foreach(QToolButton *action, statusbar_actions)
+    {
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        if(shortcut.isEmpty())
+            continue;
+
+        action->setShortcut(shortcut);
+    }
+}
+
+void MainWindow::init_data()
+{
+    // 书库
+    auto books = ReaderConfig::Instance()->bookNames();
+    if(!books.isEmpty())
+    {
+        auto current_book = ReaderConfig::Instance()->currentBook();
+
+        for(auto it = books.begin(); it != books.end(); it++)
+        {
+            auto path = ReaderConfig::Instance()->bookPath(*it);
+            if(path.isEmpty())
+                continue;
+
+            auto item = new QListWidgetItem(*it, _booklist);
+            item->setData(Qt::UserRole, path);
+            item->setSizeHint(QSize(100, 30));
+            _booklist->addItem(item);
+        }
+
+        if(!current_book.isEmpty())
+        {
+            auto lst = _booklist->findItems(current_book, Qt::MatchExactly);
+            if(!lst.isEmpty())
+                _booklist->setCurrentItem(lst.first());
+        }
+    }
+}
+
+void MainWindow::init_others()
+{
+    _autoscroll_timer = new QTimer(this);
+    _autoscroll_timer->setInterval(500);
+    connect(_autoscroll_timer, SIGNAL(timeout()), this, SLOT(autoscroll_timer_timeout()));
+}
+
+void MainWindow::library_clicked()
 {
     _ldock->setVisible(!_ldock->isVisible());
 }
@@ -80,150 +343,83 @@ void MainWindow::import_directory()
     }
 }
 
-void MainWindow::show_history()
+void MainWindow::remove_novel()
 {
-    ReadingHistory dlg(this);
+    auto item = _booklist->currentItem();
+    if(item == nullptr)
+        return;
+
+    if(QMessageBox::question(this, "删除确认", "是否从书库中删除此项？") != QMessageBox::Yes)
+        return;
+
+    ReaderConfig::Instance()->removeBook(item->text());
+
+    auto row = _booklist->currentRow();
+    if(row > 0)
+        _booklist->setCurrentRow(row - 1);
+    else
+    {
+        if(_booklist->count() > 1)
+            _booklist->setCurrentRow(1);
+    }
+
+    item = _booklist->takeItem(row);
+    if(item != nullptr)
+        delete item;
+}
+
+void MainWindow::show_bookmarks()
+{
+    Bookmarks dlg(this);
     dlg.exec();
 }
 
-void MainWindow::view_book_contents()
+void MainWindow::view_contents_clicked()
 {
     if(_booklist->currentRow() == -1)
         return;
 
-    auto filepath = _booklist->currentItem()->data(Qt::UserRole).toString();
-
-    BookContents dlg(filepath, _codec, _toc_names, _toc_indexs, _current_page, this);
-    dlg.exec();
-
-    auto toc_item_index = dlg.selectedTocItemIndex();
-    if(toc_item_index < 0)
+    BookContents dlg(_browser, this);
+    auto ret = dlg.exec();
+    if(ret != QDialog::Accepted)
         return;
 
-    _current_page = toc_item_index;
-    _current_page_edit->setText(QString("%1").arg(_current_page + 1));
-
-    ReaderConfig::Instance()->setBookCurrentPage(_current_book, _current_page);
-
-    QFile file(filepath);
-    if(!file.exists())
-    {
-        QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
-        box.exec();
-        return;
-    }
-
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    auto pagebegin = _toc_indexs[_toc_names[_current_page]];
-    auto pageend = 9223372036854775807;
-    if(_current_page < _toc_indexs.size() - 1)
-        pageend = _toc_indexs[_toc_names[_current_page + 1]];
-
-    file.seek(pagebegin);
-    auto content = file.read(pageend - pagebegin);
-    auto txt = _codec->toUnicode(content);
-    _content->setText(txt);
-
-    file.close();
+    _content->setText(_browser->currentPageContent());
+    _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
 }
 
-void MainWindow::show_advanced_options()
+void MainWindow::add_bookmark_clicked()
 {
-    AdvancedOptions dlg(this);
-    dlg.exec();
-}
-
-void MainWindow::show_jump_ratio()
-{
-    JumpRatio dlg(this);
-    dlg.exec();
+    ReaderConfig::Instance()->addBookmark(_browser->name(), _browser->currentPage());
 }
 
 void MainWindow::booklist_currentRowChanged(int currentRow)
 {
+    if(currentRow == -1)
+        return;
+
     // 获取文件
     auto item = _booklist->item(currentRow);
-    _current_book = item->text();
+    auto _current_book = item->text();
     auto filepath = item->data(Qt::UserRole).toString();
 
-    QFile file(filepath);
-    if(!file.exists())
+    ReaderConfig::Instance()->setCurrentBook(_current_book);
+
+    _browser = new BookBrowser();
+
+    this->titlebar()->setTitle(_browser->name());
+
+    if(!_browser->isAvailable())
     {
         QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
         box.exec();
         return;
     }
 
-    _codec = GetCorrectTextCodec(filepath);
-    if(_codec == nullptr)
-        return;
-
-    if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
-    {
-        return;
-    }
-
-    ReaderConfig::Instance()->setCurrentBook(_current_book);
-    this->titlebar()->setTitle(_current_book);
-
-    // 分页
-    _toc_indexs.clear();
-    _toc_names.clear();
-
-    do
-    {
-        auto pos = file.pos();
-        auto line = file.readLine();
-        auto txt = _codec->toUnicode(line).trimmed();
-
-        if(is_toc_item(txt))
-        {
-            _toc_indexs[txt] = pos;
-            _toc_names.push_back(txt);
-        }
-
-    } while(!file.atEnd());
-
     // 加载页
-    if(_toc_indexs.size() < 2)
-    {
-        file.seek(0);
-        auto content = file.readAll();
-        auto txt = _codec->toUnicode(content);
-        _content->setText(txt);
-
-        _current_page = 0;
-
-        _total_pages_edit->setText(QString("%1").arg(1));
-    }
-    else
-    {
-        _current_page = ReaderConfig::Instance()->bookCurrentPage(_current_book);
-
-        auto pagebegin = _toc_indexs[_toc_names[_current_page]];
-        auto pageend = 9223372036854775807;
-        if(_current_page < _toc_indexs.size() - 1)
-            pageend = _toc_indexs[_toc_names[_current_page + 1]];
-
-        file.close();
-        if(!file.open(QIODevice::ReadOnly))
-            return;
-
-        file.seek(pagebegin);
-        auto content = file.read(pageend - pagebegin);
-        auto txt = _codec->toUnicode(content);
-        _content->setText(txt);
-
-        _total_pages_edit->setText(QString("%1").arg(_toc_indexs.size()));
-    }
-
-    _current_page_edit->setText(QString("%1").arg(_current_page + 1));
-
-    file.close();
+    _content->setText(_browser->currentPageContent());
+    _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
+    _total_pages_edit->setText(QString("%1").arg(_browser->pageNumber()));
 }
 
 void MainWindow::previous_page_pressed()
@@ -231,38 +427,11 @@ void MainWindow::previous_page_pressed()
     if(_booklist->currentRow() == -1)
         return;
 
-    auto filepath = _booklist->currentItem()->data(Qt::UserRole).toString();
-
-    if(_current_page == 0)
-        return;    
-
-    --_current_page;
-    _current_page_edit->setText(QString("%1").arg(_current_page + 1));
-
-    ReaderConfig::Instance()->setBookCurrentPage(_current_book, _current_page);
-
-    QFile file(filepath);
-    if(!file.exists())
-    {
-        QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
-        box.exec();
+    if(!_browser->movePrevious())
         return;
-    }
 
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    auto pagebegin = _toc_indexs[_toc_names[_current_page]];
-    auto pageend = _toc_indexs[_toc_names[_current_page + 1]];
-
-    file.seek(pagebegin);
-    auto content = file.read(pageend - pagebegin);
-    auto txt = _codec->toUnicode(content);
-    _content->setText(txt);
-
-    file.close();
+    _content->setText(_browser->currentPageContent());
+    _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
 }
 
 void MainWindow::next_page_pressed()
@@ -270,40 +439,11 @@ void MainWindow::next_page_pressed()
     if(_booklist->currentRow() == -1)
         return;
 
-    auto filepath = _booklist->currentItem()->data(Qt::UserRole).toString();
-
-    if(_current_page == _toc_indexs.size() - 1)
+    if(!_browser->moveNext())
         return;
 
-    ++_current_page;
-    _current_page_edit->setText(QString("%1").arg(_current_page + 1));
-
-    ReaderConfig::Instance()->setBookCurrentPage(_current_book, _current_page);
-
-    QFile file(filepath);
-    if(!file.exists())
-    {
-        QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
-        box.exec();
-        return;
-    }
-
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    auto pagebegin = _toc_indexs[_toc_names[_current_page]];
-    auto pageend = 9223372036854775807;
-    if(_current_page < _toc_indexs.size() - 1)
-        pageend = _toc_indexs[_toc_names[_current_page + 1]];
-
-    file.seek(pagebegin);
-    auto content = file.read(pageend - pagebegin);
-    auto txt = _codec->toUnicode(content);
-    _content->setText(txt);
-
-    file.close();
+    _content->setText(_browser->currentPageContent());
+    _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
 }
 
 void MainWindow::next_screen_pressed()
@@ -323,430 +463,188 @@ void MainWindow::current_page_edit_returnPressed()
 {
     this->setFocus();
 
+    if(_booklist->currentRow() == -1)
+        return;
+
     auto txt = _current_page_edit->text().trimmed();
     bool ok = false;
     auto page_index = txt.toInt(&ok);
     if(!ok)
         return;
 
-    if(page_index < 1 || page_index > _toc_indexs.size() || page_index - 1 == _current_page)
-        return;
-
-    if(_booklist->currentRow() == -1)
-        return;
-
-    auto filepath = _booklist->currentItem()->data(Qt::UserRole).toString();
-
-    _current_page = page_index - 1;
-    ReaderConfig::Instance()->setBookCurrentPage(_current_book, _current_page);
-
-    QFile file(filepath);
-    if(!file.exists())
+    if(!_browser->moveToPage(page_index - 1))
     {
-        QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
-        box.exec();
+        _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
         return;
     }
 
-    if(!file.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    auto pagebegin = _toc_indexs[_toc_names[_current_page]];
-    auto pageend = 9223372036854775807;
-    if(_current_page < _toc_indexs.size() - 1)
-        pageend = _toc_indexs[_toc_names[_current_page + 1]];
-
-    file.seek(pagebegin);
-    auto content = file.read(pageend - pagebegin);
-    txt = _codec->toUnicode(content);
-    _content->setText(txt);
-
-    file.close();
+    _content->setText(_browser->currentPageContent());
 }
 
-void MainWindow::init_ui()
+void MainWindow::view_shotcuts()
 {
-    this->setMinimumSize(1000, 600);
-
-    this->resize(ReaderConfig::Instance()->windowSize());
-    this->setWindowState(static_cast<Qt::WindowState>(ReaderConfig::Instance()->windowState()));
-
-    // 获取应用程序对象指针
-    auto app = static_cast<DApplication*>(QApplication::instance());
-
-    // 关于
-    auto about = new DAboutDialog(this);
-
-    about->setVersion(app->applicationVersion());
-    about->setCompanyLogo(QPixmap(":/images/logo_3.png").scaledToWidth(150));
-    about->setDescription(app->applicationDescription());
-    about->setProductIcon(app->productIcon());
-    about->setProductName(app->productName());
-    about->setWebsiteLink(app->applicationHomePage());
-    about->setWebsiteName("www.listera.top");
-
-    app->setAboutDialog(about);
-
-    // 标题栏
-    auto titlebar = this->titlebar();
-    titlebar->setIcon(app->productIcon());
-    titlebar->setTitle(app->productName());
-
-    // 目录
-    auto toc = new DToolButton(titlebar);
-    toc->setText("目录");
-    titlebar->addWidget(toc, Qt::AlignRight);
-    connect(toc, SIGNAL(clicked()), this, SLOT(view_book_contents()));
-
-    // 添加书签
-    auto mark = new DToolButton(titlebar);
-    mark->setText("书签");
-    titlebar->addWidget(mark, Qt::AlignRight);
-
-    // 黑暗模式
-    auto dark = new DToolButton(titlebar);
-    dark->setText("关灯");
-    titlebar->addWidget(dark, Qt::AlignRight);
-
-    // 侧栏
-    auto sidebar = new DToolButton(titlebar);
-    sidebar->setText("书库");
-    titlebar->addWidget(sidebar, Qt::AlignRight);
-    connect(sidebar, SIGNAL(clicked()), this, SLOT(on_sidebar_clicked()));
-
-    // 菜单 文件 书签 选项 视图 帮助
-    auto topmenu = new DMenu(titlebar);
-    titlebar->setMenu(topmenu);
-
-    auto filemenu = topmenu->addMenu(tr("File"));
-    connect(filemenu->addAction(tr("Import File...")), SIGNAL(triggered()), this, SLOT(import_file()));
-    connect(filemenu->addAction(tr("Import Directory...")), SIGNAL(triggered()), this, SLOT(import_directory()));
-    filemenu->addSeparator();
-    connect(filemenu->addAction(tr("Reading History...")), SIGNAL(triggered()), this, SLOT(show_history()));
-
-    auto bmenu = topmenu->addMenu(tr("Bookmark"));
-    bmenu->addAction(tr("Add Bookmark"));
-    bmenu->addAction(tr("Open Bookmark"));
-    bmenu->addAction(tr("Remove Bookmark"));
-    bmenu->addAction(tr("Clear Bookmark"));
-    bmenu->addSeparator();
-    connect(bmenu->addAction(tr("View Book Contents")), SIGNAL(triggered()), this, SLOT(view_book_contents()));
-
-    auto opmenu = topmenu->addMenu(tr("Options"));
-    opmenu->addAction(tr("Font"));
-    opmenu->addAction(tr("Line Space"));
-    opmenu->addAction(tr("Background Color"));
-    opmenu->addAction(tr("Font Size"));
-    opmenu->addAction(tr("Font Color"));
-    opmenu->addAction(tr("Paging Mode"));
-    opmenu->addSeparator();
-    opmenu->addAction(tr("Dark Mode"));
-    opmenu->addSeparator();
-    opmenu->addAction(tr("Shotcuts"));
-    opmenu->addSeparator();
-    connect(opmenu->addAction(tr("Advanced Options")), SIGNAL(triggered()), this, SLOT(show_advanced_options()));
-
-    auto viewmenu = topmenu->addMenu(tr("View"));
-    viewmenu->addAction(tr("Toolbar"));
-    viewmenu->addAction(tr("Statusbar"));
-    viewmenu->addAction(tr("Sidebar"));
-    viewmenu->addSeparator();
-    connect(viewmenu->addAction(tr("Full Screen")), SIGNAL(triggered()), this, SLOT(showFullScreen()));
-    viewmenu->addSeparator();
-    viewmenu->addAction(tr("Auto Scrolling"));
-    connect(viewmenu->addAction(tr("Jump to Ratio")), SIGNAL(triggered()), this, SLOT(show_jump_ratio()));
-
-    auto helpmenu = topmenu->addMenu(tr("Help"));
-    helpmenu->addAction(tr("Instructions"));
-    helpmenu->addAction(tr("Feedback"));
-
-    topmenu->addSeparator();
-
-    // 工具栏，可选显示，所有功能都可以通过快捷键来
-    auto toolbar = new DToolBar(this);
-    this->addToolBar(toolbar);
-    toolbar->hide();
-
-    auto test = new DToolButton(toolbar);
-    test->setText("测试");
-    toolbar->addWidget(test);
-    toolbar->setWindowTitle("工具栏");
-
-    // 状态栏 总章 当前章 上一页 下一页 翻屏
-    auto statusbar = new DStatusBar(this);
-    this->setStatusBar(statusbar);
-
-    statusbar->setFixedHeight(30);
-    statusBar()->setStyleSheet(QString( "QStatusBar::item{border: 0px}"));
-
-    auto total_label = new QLabel(statusbar);
-    total_label->setText("总页数");
-    statusbar->addPermanentWidget(total_label);
-
-    _total_pages_edit = new QLineEdit(statusbar);
-    statusbar->addPermanentWidget(_total_pages_edit);
-    _total_pages_edit->setFixedWidth(50);
-    _total_pages_edit->setReadOnly(true);
-    _total_pages_edit->setFocusPolicy(Qt::NoFocus);
-
-    auto current_label = new QLabel(statusbar);
-    current_label->setText("当前页");
-    statusbar->addPermanentWidget(current_label);
-
-    _current_page_edit = new QLineEdit(statusbar);
-    statusbar->addPermanentWidget(_current_page_edit);
-    _current_page_edit->setFixedWidth(50);
-    connect(_current_page_edit, SIGNAL(returnPressed()), this, SLOT(current_page_edit_returnPressed()));
-
-    auto previous_page = new DToolButton(statusbar);
-    previous_page->setText("上一页");
-    statusbar->addPermanentWidget(previous_page);
-    connect(previous_page, SIGNAL(pressed()), this, SLOT(previous_page_pressed()));
-    previous_page->setShortcut(QKeySequence(hotkey_previous_page));
-
-    auto next_screen = new DToolButton(statusbar);
-    next_screen->setText("翻屏");
-    statusbar->addPermanentWidget(next_screen);
-    connect(next_screen, SIGNAL(pressed()), this, SLOT(next_screen_pressed()));
-    next_screen->setShortcut(QKeySequence(hotkey_next_screen2));
-
-    auto next_page = new DToolButton(statusbar);
-    next_page->setText("下一页");
-    statusbar->addPermanentWidget(next_page);
-    connect(next_page, SIGNAL(pressed()), this, SLOT(next_page_pressed()));
-    next_page->setShortcut(QKeySequence(hotkey_next_page));
-
-    // 内容区
-    _content = new TextContent(this);
-    this->setCentralWidget(_content);
-
-    _content->setReadOnly(true);
-    _content->setMinimumWidth(300);
-    _content->setFocusPolicy(Qt::NoFocus);
-    _content->setFontPointSize(12);
-
-    // 侧栏
-    _ldock = new QDockWidget(this);
-    _ldock->setMinimumWidth(150);
-    _ldock->setMaximumWidth(500);
-    this->addDockWidget(Qt::LeftDockWidgetArea, _ldock);
-    auto width = ReaderConfig::Instance()->sidebarWidth();
-    if(width == 0)
-        width = _ldock->minimumWidth();
-    this->resizeDocks({_ldock}, {width}, Qt::Horizontal);
-
-    _ldock->setWindowTitle("书库");
-    _ldock->setFeatures(QDockWidget::DockWidgetVerticalTitleBar);
-    //_ldock->setFeatures(QDockWidget::NoDockWidgetFeatures);
-
-    _booklist = new DListWidget(_ldock);
-    _ldock->setWidget(_booklist);
-    connect(_booklist, SIGNAL(currentRowChanged(int)), this, SLOT(booklist_currentRowChanged(int)));
-
-    _ldock->installEventFilter(this);
-    this->installEventFilter(this);
+    ReaderSettings dlg(this);
+    if(dlg.exec() == QDialog::Accepted)
+        init_shortcuts();
 }
 
-void MainWindow::init_shortcuts()
+void MainWindow::booklist_customContextMenuRequested(const QPoint &pos)
 {
-    // 菜单
-    auto menu_actions = this->titlebar()->menu()->findChildren<QAction*>();
-    foreach(QAction *action, menu_actions)
+    auto actions = _booklist_menu->findChildren<QAction*>();
+    if(!actions.isEmpty())
     {
-        if(action->isSeparator())
-            continue;
+        foreach(QAction* action, actions)
+        {
+            if(action->text() == tr("Remove"))
+            {
+                auto item = _booklist->itemAt(pos);
+                if(item == nullptr)
+                    action->setVisible(false);
+                else
+                    action->setVisible(true);
 
-        if(!_hotkeys.contains(action->text()))
-            continue;
-
-        action->setShortcut(_hotkeys[action->text()]);
+                break;
+            }
+        }
     }
 
-    // 工具栏
-    auto toolbar_actions = this->titlebar()->menu()->findChildren<QToolButton*>();
-    foreach(QToolButton *action, toolbar_actions)
-    {
-        if(!_hotkeys.contains(action->text()))
-            continue;
+    _booklist_menu->exec(QCursor::pos());
+}
 
-        action->setShortcut(_hotkeys[action->text()]);
+void MainWindow::select_font()
+{
+    bool ok = false;
+    auto font = QFontDialog::getFont(&ok, _content->font(), this);
+    if(!ok)
+        return;
+
+    _content->setFont(font);
+}
+
+void MainWindow::select_font_color()
+{
+    auto color = QColorDialog::getColor(_content->textColor(), this);
+    _content->setTextColor(color);
+}
+
+void MainWindow::select_background_color()
+{
+    auto color = QColorDialog::getColor(_content->textColor(), this);
+    _content->setTextBackgroundColor(color);
+}
+
+void MainWindow::show_dark_mode()
+{
+    _content->setTextBackgroundColor(QColor(Qt::GlobalColor::black));
+    _content->setTextColor(QColor(Qt::GlobalColor::lightGray));
+}
+
+void MainWindow::show_full_screen()
+{
+    _state_before_fullscreen = this->saveState();
+    _window_state_before_fullscreen = this->windowState();
+
+    this->showFullScreen();
+    _ldock->hide();
+    _toolbar->hide();
+}
+
+void MainWindow::set_auto_scrolling()
+{
+    auto action = _toolbar->findChild<QAction*>("set_auto_scrolling");
+    if(action == nullptr)
+        return;
+
+    if(action->isChecked())
+    {
+        action->setChecked(false);
+        _autoscroll_timer->stop();
     }
-
-    // 状态栏
-    auto statusbar_actions = this->statusBar()->findChildren<QToolButton*>();
-    foreach(QToolButton *action, statusbar_actions)
+    else
     {
-        if(!_hotkeys.contains(action->text()))
-            continue;
-
-        action->setShortcut(_hotkeys[action->text()]);
+        action->setChecked(true);
+        _autoscroll_timer->start();
     }
 }
 
-void MainWindow::displayShortcuts()
+void MainWindow::autoscroll_timer_timeout()
 {
-//    QRect rect = window()->geometry();
-//    QPoint pos(rect.x() + rect.width() / 2,
-//               rect.y() + rect.height() / 2);
+    _content->moveCursor(QTextCursor::Down);
+    if(_content->textCursor().atEnd())
+        next_page_pressed();
+}
 
-//    //窗体快捷键
-//    QStringList windowKeymaps;
-//    windowKeymaps << "addblanktab" << "newwindow" << "savefile"
-//                  << "saveasfile" << "selectnexttab" << "selectprevtab"
-//                  << "closetab" << "closeothertabs" << "restoretab"
-//                  << "openfile" << "incrementfontsize" << "decrementfontsize"
-//                  << "resetfontsize" << "togglefullscreen" << "find" << "replace"
-//                  << "jumptoline" << "saveposition" << "restoreposition"
-//                  << "escape" << "print";
+void MainWindow::view_instructions()
+{
+    QDesktopServices::openUrl(QUrl("https://www.listera.top"));
+}
 
-//    QJsonObject shortcutObj;
-//    QJsonArray jsonGroups;
-
-//    QJsonObject windowJsonGroup;
-//    windowJsonGroup.insert("groupName", QObject::tr("Window"));
-//    QJsonArray windowJsonItems;
-
-//    for (const QString &keymap : windowKeymaps) {
-//        auto option = m_settings->settings->group("shortcuts.window")->option(QString("shortcuts.window.%1").arg(keymap));
-//        QJsonObject jsonItem;
-//        jsonItem.insert("name", QObject::tr(option->name().toUtf8().data()));
-//        if (keymap != "incrementfontsize" && keymap != "decrementfontsize") {
-//            jsonItem.insert("value", option->value().toString().replace("Meta", "Super"));
-//        } else if (keymap == "incrementfontsize") {
-//            QString strIncrementfontValue = QString(tr("Ctrl+'='"));
-//            jsonItem.insert("value", strIncrementfontValue.replace("Meta", "Super"));
-//        } else if (keymap == "decrementfontsize" && option->value().toString() == "Ctrl+-") {
-//            QString strDecrementfontValue = QString(tr("Ctrl+'-'"));
-//            jsonItem.insert("value", strDecrementfontValue.replace("Meta", "Super"));
-//        }
-
-//        windowJsonItems.append(jsonItem);
-//    }
-
-//    windowJsonGroup.insert("groupItems", windowJsonItems);
-//    jsonGroups.append(windowJsonGroup);
-
-//    //编辑快捷键
-//    QStringList editorKeymaps;
-//    editorKeymaps << "indentline" << "backindentline" << "forwardchar"
-//                  << "backwardchar" << "forwardword" << "backwardword"
-//                  << "nextline" << "prevline" << "newline" << "opennewlineabove"
-//                  << "opennewlinebelow" << "duplicateline" << "killline"
-//                  << "killcurrentline" << "swaplineup" << "swaplinedown"
-//                  << "scrolllineup" << "scrolllinedown" << "scrollup"
-//                  << "scrolldown" << "movetoendofline" << "movetostartofline"
-//                  << "movetoend" << "movetostart" << "movetolineindentation"
-//                  << "upcaseword" << "downcaseword" << "capitalizeword"
-//                  << "killbackwardword" << "killforwardword" << "forwardpair"
-//                  << "backwardpair" << "selectall" << "copy" << "cut"
-//                  << "paste" << "transposechar" << "setmark" << "exchangemark"
-//                  << "copylines" << "cutlines" << "joinlines" << "togglereadonlymode"
-//                  << "togglecomment" << "removecomment" << "undo" << "redo" << "switchbookmark" << "movetoprebookmark"
-//                  << "movetonextbookmark" << "mark";
-
-//    QJsonObject editorJsonGroup;
-//    editorJsonGroup.insert("groupName", tr("Editor"));
-//    QJsonArray editorJsonItems;
-
-//    for (const QString &keymap : editorKeymaps) {
-//        auto option = m_settings->settings->group("shortcuts.editor")->option(QString("shortcuts.editor.%1").arg(keymap));
-//        QJsonObject jsonItem;
-//        jsonItem.insert("name", QObject::tr(option->name().toUtf8().data()));
-//        jsonItem.insert("value", option->value().toString().replace("Meta", "Super"));
-//        editorJsonItems.append(jsonItem);
-//    }
-//    editorJsonGroup.insert("groupItems", editorJsonItems);
-//    jsonGroups.append(editorJsonGroup);
-
-//    //设置快捷键
-//    QStringList setupKeymaps;
-//    setupKeymaps << "help" << "displayshortcuts";
-
-//    QJsonObject setupJsonGroup;
-//    setupJsonGroup.insert("groupName", tr("Settings"));
-//    QJsonArray setupJsonItems;
-
-//    for (const QString &keymap : setupKeymaps) {
-//        auto option = m_settings->settings->group("shortcuts.window")->option(QString("shortcuts.window.%1").arg(keymap));
-//        QJsonObject jsonItem;
-//        jsonItem.insert("name", QObject::tr(option->name().toUtf8().data()));
-//        jsonItem.insert("value", option->value().toString().replace("Meta", "Super"));
-//        setupJsonItems.append(jsonItem);
-//    }
-//    setupJsonGroup.insert("groupItems", setupJsonItems);
-//    jsonGroups.append(setupJsonGroup);
-
-//    shortcutObj.insert("shortcut", jsonGroups);
-
-//    QJsonDocument doc(shortcutObj);
-
-//    QStringList shortcutString;
-//    QString param1 = "-j=" + QString(doc.toJson().data());
-//    QString param2 = "-p=" + QString::number(pos.x()) + "," + QString::number(pos.y());
-//    shortcutString << param1 << param2;
-
-//    QProcess *shortcutViewProcess = new QProcess();
-//    shortcutViewProcess->startDetached("deepin-shortcut-viewer", shortcutString);
-
-//    connect(shortcutViewProcess, SIGNAL(finished(int)), shortcutViewProcess, SLOT(deleteLater()));
+void MainWindow::send_feedback()
+{
+    QDesktopServices::openUrl(QUrl("https://www.listera.top"));
 }
 
 bool MainWindow::eventFilter(QObject *target, QEvent *event)
 {
-    if(event->type() == QEvent::Resize)
-    {
-        if(target == this)
-        {
-            ReaderConfig::Instance()->setWindowSize(this->size());
-            ReaderConfig::Instance()->setWindowState(static_cast<int>(this->windowState()));
-        }
-        else if(target == _ldock)
-        {
-            ReaderConfig::Instance()->setSidebarWidth(_ldock->width());
-        }
-    }
-    else if(event->type() == QEvent::KeyPress)
+    if(event->type() == QEvent::KeyPress)
     {
         auto keve = static_cast<QKeyEvent*>(event);
+
         if(keve->key() == Qt::Key_Escape)
         {
             if(this->isFullScreen())
+            {
                 this->showNormal();
+                this->restoreState(_state_before_fullscreen);
+                this->setWindowState(_window_state_before_fullscreen);
+            }
         }
+        else if(keve->key() == Qt::Key_Return || keve->key() == Qt::Key_Enter)
+        {
+            if(target->objectName() == "linespace")
+            {
+                auto edit = static_cast<QLineEdit*>(target);
+
+                auto txt = edit->text().trimmed();
+                bool ok = false;
+                auto linespace = txt.toDouble(&ok);
+                if(ok)
+                {
+                    QTextBlockFormat textBlockFormat;
+                    textBlockFormat.setBottomMargin(linespace);
+                    _content->textCursor().setBlockFormat(textBlockFormat);
+                }
+            }
+            else if(target->objectName() == "jumptoratio")
+            {
+                auto edit = static_cast<QLineEdit*>(target);
+
+                auto txt = edit->text().trimmed();
+                bool ok = false;
+                auto ratio = txt.toFloat(&ok);
+                if(ok)
+                {
+                    _browser->moveToRatio(ratio / 100);
+
+                    _content->setText(_browser->currentPageContent());
+                    _current_page_edit->setText(QString("%1").arg(_browser->currentPage()));
+                }
+            }
+        }
+
         this->setFocus();
     }
 
     // 处理其他消息
-    return QWidget::eventFilter(target, event);
+    return DMainWindow::eventFilter(target, event);
 }
 
-void MainWindow::init_data()
+void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // 书库
-    auto books = ReaderConfig::Instance()->bookNames();
-    if(!books.isEmpty())
-    {
-        auto current_book = ReaderConfig::Instance()->currentBook();
+    Q_UNUSED(event)
 
-        for(auto it = books.begin(); it != books.end(); it++)
-        {
-            auto path = ReaderConfig::Instance()->bookPath(*it);
-            if(path.isEmpty())
-                continue;
-
-            auto item = new QListWidgetItem(*it, _booklist);
-            item->setData(Qt::UserRole, path);
-            item->setSizeHint(QSize(100, 30));
-            _booklist->addItem(item);
-        }
-
-        if(!current_book.isEmpty())
-        {
-            auto lst = _booklist->findItems(current_book, Qt::MatchExactly);
-            if(!lst.isEmpty())
-                _booklist->setCurrentItem(lst.first());
-        }
-    }
+    // 保存配置
+    ReaderConfig::Instance()->setWindowSize(this->size());
+    ReaderConfig::Instance()->setWindowState(static_cast<int>(this->windowState()));
+    ReaderConfig::Instance()->setSidebarWidth(_ldock->width());
 }

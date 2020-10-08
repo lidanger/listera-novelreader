@@ -1,14 +1,14 @@
 cmake_minimum_required (VERSION 3.5)
 
-project(listera-reader 
+project(listera-novelreader 
     VERSION 1.0.1.2
-    DESCRIPTION "A txt novel reader"
-    HOMEPAGE_URL "https://gitee.com/lidanger/txtreader"
+    DESCRIPTION "A Chinese novel reader for txt files"
+    HOMEPAGE_URL "https://gitee.com/lidanger/listera-novelreader"
     LANGUAGES "CXX")
 
 # build targets
 
-find_package(Qt5Widgets)  
+find_package(Qt5Widgets)
 find_package(Qt5Core)
 find_package(Qt5Gui)
 
@@ -19,18 +19,14 @@ file(GLOB RCC_FILES resources/*.qrc)
 add_executable(${PROJECT_NAME} ${SRC} ${RCC_FILES})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES 
-    VERSION ${PROJECT_VERSION} 
-    SOVERSION 1
     OUTPUT_NAME ${PROJECT_NAME}
     AUTOMOC ON
-    AUTORCC ON)
+    AUTORCC ON
+    AUTOUIC ON)
 
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets Qt5::Core Qt5::Gui 
+target_link_libraries(${PROJECT_NAME} 
+    Qt5::Widgets Qt5::Core Qt5::Gui 
     dtkcore dtkgui dtkwidget)
-
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -90,7 +86,7 @@ endif()
 # build packages
 
 set(CPACK_PACKAGE_DESCRIPTION 
-    "A txt novel reader.")
+    "A Chinese novel reader for txt files.")
 
 set(CPACK_PACKAGE_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
 set(CPACK_PACKAGE_CONTACT "lidanger <lidanger@outlook.com>")

@@ -5,12 +5,12 @@
 
 DWIDGET_USE_NAMESPACE
 
-class ReadingHistory : public DDialog
+class Bookmarks : public DDialog
 {
     Q_OBJECT
 
 public:
-    ReadingHistory(QWidget *parent = nullptr);
+    Bookmarks(QWidget *parent = nullptr);
 };
 
 #endif // READINGHISTORY_H

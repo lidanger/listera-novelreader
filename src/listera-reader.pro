@@ -13,22 +13,23 @@ SOURCES += \
     application.cpp \
     textcontent.cpp \
     readerconfig.cpp \
-    readinghistory.cpp \
     bookcontents.cpp \
-    advancedoptions.cpp \
-    jumpratio.cpp
+    bookbrowser.cpp \
+    utils.cpp \
+    readersettings.cpp \
+    bookmarks.cpp
 
 RESOURCES +=         ../resources/resources.qrc
 
-TRANSLATIONS = ../translations/listera-reader_zh_CN.ts
+TRANSLATIONS = ../translations/listera-novelreader_zh_CN.ts
 
 HEADERS += \
     mainwindow.h \
     application.h \
     textcontent.h \
     readerconfig.h \
-    readinghistory.h \
     bookcontents.h \
-    advancedoptions.h \
-    jumpratio.h \
-    utils.h
+    utils.h \
+    bookbrowser.h \
+    readersettings.h \
+    bookmarks.h
