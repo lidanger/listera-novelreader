@@ -1,29 +1,27 @@
 #include "readerconfig.h"
-#include "readersettings.h"
+#include "shotcutsettings.h"
 
 #include <QBoxLayout>
 #include <QListWidget>
 #include <DLabel>
-#include <QEvent>
 #include <QResizeEvent>
 #include <DMainWindow>
 #include <DStatusBar>
 #include <DTitlebar>
 #include <QToolButton>
 #include <QToolBar>
-#include <QDockWidget>
 #include <QKeySequenceEdit>
 
-ReaderSettings::ReaderSettings(QWidget *parent)
+ShotcutSettings::ShotcutSettings(QWidget *parent)
     :DDialog (parent)
 {
     init_ui();
     init_data();
 }
 
-void ReaderSettings::init_ui()
+void ShotcutSettings::init_ui()
 {
-    this->setWindowTitle(tr("Detailed Settings"));
+    this->setWindowTitle(tr("Shotcuts"));
     this->setFixedSize(370, 600);
 
     this->addButton(tr("OK"));
@@ -36,7 +34,7 @@ void ReaderSettings::init_ui()
     _shortcut_list->setSelectionMode(QAbstractItemView::NoSelection);
 }
 
-void ReaderSettings::init_data()
+void ShotcutSettings::init_data()
 {
     if(this->parent() == nullptr)
         return;
@@ -45,7 +43,7 @@ void ReaderSettings::init_data()
     auto mainwindow = static_cast<DMainWindow*>(this->parent());
 
     // 标题栏按钮
-    auto topbar_title = new QListWidgetItem("标题栏按钮", _shortcut_list);
+    auto topbar_title = new QListWidgetItem(tr("Titlebar buttons"), _shortcut_list);
     _shortcut_list->addItem(topbar_title);
     topbar_title->setSizeHint(QSize(100, 50));
     auto font = topbar_title->font();
@@ -76,7 +74,7 @@ void ReaderSettings::init_data()
     }
 
     // 工具栏
-    auto toolbars_title = new QListWidgetItem("工具栏按钮", _shortcut_list);
+    auto toolbars_title = new QListWidgetItem(tr("Toolbar buttons"), _shortcut_list);
     _shortcut_list->addItem(toolbars_title);
     toolbars_title->setSizeHint(QSize(100, 50));
     toolbars_title->setFont(font);
@@ -107,12 +105,15 @@ void ReaderSettings::init_data()
             auto edit = new QKeySequenceEdit(widget);
             layout->addWidget(edit);
 
-            edit->setKeySequence(button->shortcut());
+            if(button->defaultAction()->objectName() == "bosskey")
+                edit->setKeySequence(mainwindow->findChild<QAction*>("bosskey_real")->shortcut());
+            else
+                edit->setKeySequence(button->defaultAction()->shortcut());
         }
     }
 
     // 状态栏
-    auto statusbar_title = new QListWidgetItem("状态栏按钮", _shortcut_list);
+    auto statusbar_title = new QListWidgetItem(tr("Statusbar buttons"), _shortcut_list);
     _shortcut_list->addItem(statusbar_title);
     statusbar_title->setSizeHint(QSize(100, 50));
     statusbar_title->setFont(font);
@@ -137,15 +138,15 @@ void ReaderSettings::init_data()
         auto edit = new QKeySequenceEdit(widget);
         layout->addWidget(edit);
 
-        edit->setKeySequence(button->shortcut());
+        edit->setKeySequence(button->defaultAction()->shortcut());
     }
 }
 
-void ReaderSettings::onButtonClicked(int index, const QString &text)
+void ShotcutSettings::onButtonClicked(int index, const QString &text)
 {
-    Q_UNUSED(index)
+    Q_UNUSED(text)
 
-    if(text != tr("OK"))
+    if(index != 0)
     {
         this->reject();
         return;

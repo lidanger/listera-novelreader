@@ -36,6 +36,33 @@
     </message>
 </context>
 <context>
+    <name>Bookmarks</name>
+    <message>
+        <source>Bookmark List</source>
+        <translation>书签列表</translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation>删除</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清空</translation>
+    </message>
+    <message>
+        <source>Book Name</source>
+        <translation>书名</translation>
+    </message>
+    <message>
+        <source>Page Number</source>
+        <translation>页码</translation>
+    </message>
+    <message>
+        <source>Record Time</source>
+        <translation>时间</translation>
+    </message>
+</context>
+<context>
     <name>MainWindow</name>
     <message>
         <source>File</source>
@@ -123,7 +150,7 @@
     </message>
     <message>
         <source>Toolbar</source>
-        <translation>工具栏</translation>
+        <translation type="vanished">工具栏</translation>
     </message>
     <message>
         <source>Statusbar</source>
@@ -139,11 +166,11 @@
     </message>
     <message>
         <source>Auto Scrolling</source>
-        <translation>自动翻屏</translation>
+        <translation>自动滚屏</translation>
     </message>
     <message>
         <source>Jump to Ratio</source>
-        <translation type="vanished">跳转到百分比</translation>
+        <translation>跳转到</translation>
     </message>
     <message>
         <source>Instructions</source>
@@ -155,7 +182,7 @@
     </message>
     <message>
         <source>Shotcuts</source>
-        <translation type="vanished">快捷键</translation>
+        <translation>快捷键</translation>
     </message>
     <message>
         <source>View Contents</source>
@@ -179,15 +206,15 @@
     </message>
     <message>
         <source>Settings</source>
-        <translation>设置</translation>
+        <translation type="vanished">设置</translation>
     </message>
     <message>
         <source>Line Space:</source>
-        <translation>行间距：</translation>
+        <translation type="vanished">行间距：</translation>
     </message>
     <message>
         <source>Jump to Ratio:</source>
-        <translation>跳转到：</translation>
+        <translation type="vanished">跳转到：</translation>
     </message>
     <message>
         <source>Ratio</source>
@@ -207,7 +234,7 @@
     </message>
     <message>
         <source>Next Screen</source>
-        <translation>滚屏</translation>
+        <translation>翻屏</translation>
     </message>
     <message>
         <source>Next Page</source>
@@ -221,6 +248,75 @@
         <source>Remove</source>
         <translation>删除</translation>
     </message>
+    <message>
+        <source>Select Files</source>
+        <translation>选择文件</translation>
+    </message>
+    <message>
+        <source>Select Directory</source>
+        <translation>选择文件夹</translation>
+    </message>
+    <message>
+        <source>Remove Confirm</source>
+        <translation>删除确认</translation>
+    </message>
+    <message>
+        <source>You are going to remove this item, continue?</source>
+        <translation>即将删除此项，是否继续？</translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation>清空</translation>
+    </message>
+    <message>
+        <source>File not found</source>
+        <translation>文件位找到</translation>
+    </message>
+    <message>
+        <source>The following file was not found:
+%1</source>
+        <translation>以下文件未找到：%1</translation>
+    </message>
+    <message>
+        <source>Confirm</source>
+        <translation>确认</translation>
+    </message>
+    <message>
+        <source>You are going to clear the reading history, continue?</source>
+        <translation>即将清空阅读记录，是否继续？</translation>
+    </message>
+    <message>
+        <source>Input to find</source>
+        <translation>输入以查找</translation>
+    </message>
+    <message>
+        <source>Find text</source>
+        <translation>查找</translation>
+    </message>
+    <message>
+        <source>ToolBar</source>
+        <translation>工具栏</translation>
+    </message>
+    <message>
+        <source>StatusBar</source>
+        <translation>状态栏</translation>
+    </message>
+    <message>
+        <source>Input to search</source>
+        <translation>输入以搜索</translation>
+    </message>
+    <message>
+        <source>Search</source>
+        <translation>搜索</translation>
+    </message>
+    <message>
+        <source>Boss Key</source>
+        <translation>老板键</translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation>默认</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -228,20 +324,32 @@
         <source>First Page</source>
         <translation>首页</translation>
     </message>
+    <message>
+        <source>Can not find book </source>
+        <translation>找不到书籍</translation>
+    </message>
+    <message>
+        <source>&apos;s corresponding file:</source>
+        <translation>的对应文件</translation>
+    </message>
+    <message>
+        <source> not exists</source>
+        <translation>不存在</translation>
+    </message>
 </context>
 <context>
     <name>ReaderSettings</name>
     <message>
         <source>Detailed Settings</source>
-        <translation>详细设置</translation>
+        <translation type="vanished">详细设置</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation>确定</translation>
+        <translation type="vanished">确定</translation>
     </message>
     <message>
         <source>Cancel</source>
-        <translation>取消</translation>
+        <translation type="vanished">取消</translation>
     </message>
 </context>
 <context>
@@ -257,6 +365,60 @@
     <message>
         <source>Cancel</source>
         <translation type="vanished">取消</translation>
+    </message>
+</context>
+<context>
+    <name>ShotcutSettings</name>
+    <message>
+        <source>Shotcut Settings</source>
+        <translation type="vanished">快捷键设置</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>确定</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Titlebar buttons</source>
+        <translation>标题栏按钮</translation>
+    </message>
+    <message>
+        <source>Toolbar buttons</source>
+        <translation>工具栏按钮</translation>
+    </message>
+    <message>
+        <source>Statusbar buttons</source>
+        <translation>状态栏按钮</translation>
+    </message>
+    <message>
+        <source>Shotcuts</source>
+        <translation>快捷键</translation>
+    </message>
+</context>
+<context>
+    <name>TextContent</name>
+    <message>
+        <source>Copy</source>
+        <translation>复制</translation>
+    </message>
+    <message>
+        <source>Select All</source>
+        <translation>全选</translation>
+    </message>
+    <message>
+        <source>Web Search</source>
+        <translation>在线搜索</translation>
+    </message>
+    <message>
+        <source>Translate</source>
+        <translation type="vanished">翻译</translation>
+    </message>
+    <message>
+        <source>Web Translate</source>
+        <translation>在线翻译</translation>
     </message>
 </context>
 </TS>

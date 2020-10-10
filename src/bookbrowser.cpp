@@ -30,7 +30,7 @@ QString BookBrowser::pageContent(int page)
 {
     if(!_file->exists())
     {
-        qDebug() << "未找到书籍" << _book_name << "对应文件:" << _file->fileName() << endl;
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
 
@@ -62,7 +62,7 @@ QString BookBrowser::pageContent(QString page_name)
 
     if(!_file->exists())
     {
-        qDebug() << "未找到书籍" << _book_name << "对应文件:" << _file->fileName() << endl;
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
 
@@ -82,7 +82,7 @@ QString BookBrowser::pagePreview(int page, int num)
 
     if(!_file->exists())
     {
-        qDebug() << "未找到书籍" << _book_name << "对应文件:" << _file->fileName() << endl;
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
 
@@ -101,7 +101,7 @@ QString BookBrowser::pagePreview(QString page_name, int num)
 
     if(!_file->exists())
     {
-        qDebug() << "未找到书籍" << _book_name << "对应文件:" << _file->fileName() << endl;
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
 
@@ -165,7 +165,7 @@ void BookBrowser::_bookPaging(QString file_path)
 
     if(!_file->exists())
     {
-        qDebug() << "未找到书籍" << _book_name << "对应文件:" << _file->fileName() << endl;
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return;
     }
 

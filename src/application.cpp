@@ -16,7 +16,7 @@ Application::Application(int &argc, char **argv)
     // 相关信息
     this->setOrganizationName("listera");
     this->setApplicationName("listera-novelreader");
-    this->setApplicationVersion("1.0.2.5");
+    this->setApplicationVersion("1.0.3.16");
     this->setProductIcon(QIcon(":/images/logo.png"));
     this->setApplicationHomePage("https://www.listera.top");
 
@@ -40,6 +40,8 @@ Application::Application(int &argc, char **argv)
 
     // 单实例
     this->setSingleInstance("listera-novelreader_20200930");
+
+    connect(this, SIGNAL(aboutToQuit()), this, SLOT(_aboutToQuit()));
 }
 
 void Application::setMessageLogging()
@@ -92,4 +94,9 @@ void Application::_messageOutput(QtMsgType type, const QMessageLogContext &conte
         file.flush();
         file.close();
     }
+}
+
+void Application::_aboutToQuit()
+{
+
 }

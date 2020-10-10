@@ -3,11 +3,13 @@
 
 #include "bookbrowser.h"
 #include "textcontent.h"
-
 #include <DMainWindow>
 #include <DDockWidget>
 #include <DListView>
 #include <QTimer>
+#include <DTextEdit>
+#include <QSystemTrayIcon>
+#include <QTime>
 
 DWIDGET_USE_NAMESPACE
 
@@ -26,6 +28,9 @@ private:
     void init_others();
 
 private slots:
+    void showDSettingsDialog();
+    void dSettings_valueChanged(const QString &key, const QVariant &value);
+
     void library_clicked();
     void add_bookmark_clicked();
 
@@ -33,6 +38,7 @@ private slots:
     void import_directory();
     void remove_novel();
 
+    void history_aboutToShow();
     void show_bookmarks();
     void view_contents_clicked();
 
@@ -43,7 +49,7 @@ private slots:
     void next_screen_pressed();
     void current_page_edit_returnPressed();
 
-    void view_shotcuts();
+    void shotcut_settings();
 
     void booklist_customContextMenuRequested(const QPoint &pos);
 
@@ -54,26 +60,42 @@ private slots:
     void show_full_screen();
     void set_auto_scrolling();
     void autoscroll_timer_timeout();
+    void autoscroll_wait_restart();
+    void _find_text_returnPressed();
 
     void view_instructions();
     void send_feedback();
 
+    void history_item_triggered();
+    void clear_history();
+
+    void toolbar_menu_aboutToShow();
+
+    void linespace_currentIndexChanged(const QString &text);
+    void jumptoratio_returnPressed();
+
+    void web_search();
+    void search_engine_select(QAction *action);
+
+    void tray_icon_activated(QSystemTrayIcon::ActivationReason reason);
+
 private:
     bool eventFilter(QObject *target, QEvent *event);
-
     void closeEvent(QCloseEvent *event);
 
 private:
+    DToolBar *_toolbar;
     DDockWidget *_ldock;
     DListWidget *_booklist;
     TextContent *_content;
-    DToolBar *_toolbar;
+    QMenu *_content_menu;
 
     QLineEdit *_current_page_edit;
     QLineEdit *_total_pages_edit;
 
     QMenu *_reading_history_menu;
     QMenu *_booklist_menu;
+    QMenu *_toolbar_menu;
 
     BookBrowser *_browser;
 
@@ -81,6 +103,11 @@ private:
     Qt::WindowStates _window_state_before_fullscreen;
 
     QTimer *_autoscroll_timer;
+
+    QString _style_before_darkmode;
+
+    QSystemTrayIcon *_tray_icon;
+    QDateTime _last_tray_active_time;
 };
 
 #endif // MAINWINDOW_H

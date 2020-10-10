@@ -3,6 +3,8 @@
 #include <QDebug>
 #include <QFile>
 #include <QSet>
+#include <QDesktopServices>
+#include <QUrl>
 
 // 编码转换
 QString GetCorrectUnicode(const QByteArray &ba)
@@ -126,4 +128,120 @@ bool is_toc_item(QString line)
     }
 
     return false;
+}
+
+static QMap<QString, QString> _web_search_engine(
+{
+            { "Baidu", "https://www.baidu.com/s?wd=%1" },
+            { "Google", "https://www.google.com.hk/search?q=%1" },
+            { "Bing", "https://bing.com/search?q=%1" },
+            { "Sogou", "https://www.sogou.com/sogou?query=%1" },
+});
+static QMap<QString, QString> _web_search_engine_names(
+{
+            { "百度", "Baidu" },
+            { "谷歌", "Google" },
+            { "必应", "Bing" },
+            { "搜狗", "Sogou" },
+});
+
+void startWebSearch(QString text, QString engine)
+{
+    if(text.isEmpty())
+        return;
+
+    if(engine.isEmpty())
+        engine = "baidu";
+
+    if(!_web_search_engine.contains(engine))
+    {
+        if(_web_search_engine_names.contains(engine))
+            engine = _web_search_engine_names[engine];
+        else
+            return;
+    }
+
+    auto search_url = _web_search_engine[engine].arg(text);
+    QDesktopServices::openUrl(QUrl(search_url));
+}
+
+QStringList searchEngines()
+{
+    return _web_search_engine.keys();
+}
+
+QString searchEngineChineseName(QString engine)
+{
+    for(auto it = _web_search_engine_names.begin(); it != _web_search_engine_names.end(); it++)
+    {
+        if(it.value() == engine)
+            return it.key();
+    }
+
+    return QString();
+}
+
+QString serachEngineName(QString chineseName)
+{
+    if(_web_search_engine_names.contains(chineseName))
+        return _web_search_engine_names[chineseName];
+
+    return QString();
+}
+
+static QMap<QString, QString> _web_translate_engine(
+{
+            { "Youdao", "http://www.youdao.com/w/%1" },
+            { "Baidu", "https://fanyi.baidu.com/?aldtype=85#zh/en/%1"},
+            { "Google", "https://translate.google.cn/#view=home&op=translate&sl=auto&tl=en&text=%1" }
+});
+static QMap<QString, QString> _web_translate_engine_names(
+{
+            { "有道", "Youdao" },
+            { "百度", "Baidu" },
+            { "谷歌", "Google" }
+});
+
+void startWebTranslate(QString text, QString engine)
+{
+    if(text.isEmpty())
+        return;
+
+    if(engine.isEmpty())
+        engine = "Baidu";
+
+    if(!_web_translate_engine.contains(engine))
+    {
+        if(_web_translate_engine_names.contains(engine))
+            engine = _web_translate_engine_names[engine];
+        else
+            return;
+    }
+
+    auto search_url = _web_translate_engine[engine].arg(text);
+    QDesktopServices::openUrl(QUrl(search_url));
+}
+
+QStringList translateEngines()
+{
+    return _web_translate_engine.keys();
+}
+
+QString translateEngineChineseName(QString engine)
+{
+    for(auto it = _web_translate_engine_names.begin(); it != _web_translate_engine_names.end(); it++)
+    {
+        if(it.value() == engine)
+            return it.key();
+    }
+
+    return QString();
+}
+
+QString translateEngineName(QString chineseName)
+{
+    if(_web_translate_engine_names.contains(chineseName))
+        return _web_translate_engine_names[chineseName];
+
+    return QString();
 }

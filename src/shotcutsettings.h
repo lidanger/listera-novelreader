@@ -6,12 +6,12 @@
 
 DWIDGET_USE_NAMESPACE
 
-class ReaderSettings : public DDialog
+class ShotcutSettings : public DDialog
 {
     Q_OBJECT
 
 public:
-    ReaderSettings(QWidget *parent = nullptr);
+    ShotcutSettings(QWidget *parent = nullptr);
 
 private:
     void init_ui();

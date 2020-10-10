@@ -3,14 +3,13 @@
 #include "readerconfig.h"
 #include "bookmarks.h"
 #include "bookbrowser.h"
-#include "readersettings.h"
+#include "shotcutsettings.h"
 #include "utils.h"
 #include <DTitlebar>
-#include <DToolButton>
-#include <DToolBar>
+#include <QToolButton>
+#include <QToolBar>
 #include <QDockWidget>
 #include <DStatusBar>
-#include <QSignalMapper>
 #include <DListWidget>
 #include <QtDebug>
 #include <QMessageBox>
@@ -25,22 +24,62 @@
 #include <QColorDialog>
 #include <QDesktopServices>
 #include <QScrollBar>
+#include <DSettings>
+#include <DSettingsDialog>
+#include <DSettingsGroup>
+#include <DSettingsOption>
+#include <QComboBox>
+
+DCORE_USE_NAMESPACE
 
 MainWindow::MainWindow()
     : DMainWindow()
 {
-    make_ui();
+    _toolbar = new QToolBar(this);
+    this->addToolBar(Qt::TopToolBarArea, _toolbar);
+
+    auto statusbar = new DStatusBar(this);
+    this->setStatusBar(statusbar);
+
+    _ldock = new QDockWidget(this);
+    this->addDockWidget(Qt::LeftDockWidgetArea, _ldock);
+
+    _content = new TextContent(this);
+    this->setCentralWidget(_content);
+
+    _browser = new BookBrowser();
+
     init_ui();
     init_shortcuts();
     init_data();
     init_others();
 }
 
-void MainWindow::make_ui()
+void MainWindow::init_ui()
 {
     // 窗口
     this->setMinimumSize(1000, 600);
+    this->resize(ReaderConfig::Instance()->windowSize());
+    this->setWindowState(static_cast<Qt::WindowState>(ReaderConfig::Instance()->windowState()));
     this->installEventFilter(this);
+    this->setContextMenuPolicy(Qt::NoContextMenu);
+
+    _toolbar_menu = new QMenu(this);
+    connect(_toolbar_menu, SIGNAL(aboutToShow()), this, SLOT(toolbar_menu_aboutToShow()));
+
+    auto action = _toolbar_menu->addAction(tr("ToolBar"), _toolbar, SLOT(setVisible(bool)));
+    action->setCheckable(true);
+    action->setChecked(ReaderConfig::Instance()->toolbarState());
+    action->setObjectName("toolbar");
+    action = _toolbar_menu->addAction(tr("StatusBar"), this->statusBar(), SLOT(setVisible(bool)));
+    action->setCheckable(true);
+    action->setChecked(ReaderConfig::Instance()->statusbarState());
+    action->setObjectName("statusbar");
+    _toolbar_menu->addSeparator();
+    action = _toolbar_menu->addAction(tr("Library"), _ldock, SLOT(setVisible(bool)));
+    action->setCheckable(true);
+    action->setChecked(ReaderConfig::Instance()->sidebarState());
+    action->setObjectName("library");
 
     // 关于
     auto about = new DAboutDialog(this);
@@ -57,136 +96,238 @@ void MainWindow::make_ui()
 
     // 标题栏
     auto titlebar = this->titlebar();
-    titlebar->setObjectName("titlebar");
     titlebar->setAutoHideOnFullscreen(true);
     titlebar->setIcon(app->productIcon());
     titlebar->setTitle(app->productName());
 
-    auto toc = new DToolButton(titlebar);
-    toc->setText(tr("View Contents"));
-    titlebar->addWidget(toc, Qt::AlignRight);
-    connect(toc, SIGNAL(clicked()), this, SLOT(view_contents_clicked()));
+    auto button = new QToolButton(titlebar);
+    titlebar->addWidget(button, Qt::AlignRight);
+    button->setText(tr("View Contents"));
+    button->setShortcut(Qt::Key_F6);
+    connect(button, SIGNAL(clicked()), this, SLOT(view_contents_clicked()));
 
-    auto mark = new DToolButton(titlebar);
-    mark->setText(tr("Add BookMark"));
-    titlebar->addWidget(mark, Qt::AlignRight);
-    connect(mark, SIGNAL(clicked()), this, SLOT(add_bookmark_clicked()));
+    button = new QToolButton(titlebar);
+    titlebar->addWidget(button, Qt::AlignRight);
+    button->setText(tr("Add BookMark"));
+    button->setShortcut(Qt::Key_F3);
+    connect(button, SIGNAL(clicked()), this, SLOT(add_bookmark_clicked()));
 
-    auto sidebar = new DToolButton(titlebar);
-    sidebar->setText(tr("Book Library"));
-    titlebar->addWidget(sidebar, Qt::AlignRight);
-    connect(sidebar, SIGNAL(clicked()), this, SLOT(library_clicked()));
+    button = new QToolButton(titlebar);
+    titlebar->addWidget(button, Qt::AlignRight);
+    button->setText(tr("Book Library"));
+    button->setShortcut(Qt::Key_F2);
+    connect(button, SIGNAL(clicked()), this, SLOT(library_clicked()));
 
     // 主菜单
     auto topmenu = new DMenu(titlebar);
     titlebar->setMenu(topmenu);
 
     _reading_history_menu = topmenu->addMenu(tr("Reading History"));
+    connect(_reading_history_menu, SIGNAL(aboutToShow()), this, SLOT(history_aboutToShow()));
     topmenu->addAction(tr("Bookmarks"), this, SLOT(show_bookmarks()));
+    topmenu->addSeparator();
+    topmenu->addAction(tr("Shotcuts"), this, SLOT(shotcut_settings()));
     topmenu->addSeparator();
     topmenu->addAction(tr("Instructions"), this, SLOT(view_instructions()));
     topmenu->addAction(tr("Feedback"), this, SLOT(send_feedback()));
     topmenu->addSeparator();
-    topmenu->addAction(tr("Settings"), this, SLOT(view_shotcuts()));
-    topmenu->addSeparator();
 
     // 工具栏
-    _toolbar = new DToolBar(this);
-    this->addToolBar(Qt::TopToolBarArea, _toolbar);
-
-    _toolbar->setObjectName("toolbar");
-    _toolbar->setWindowTitle(tr("Toolbar"));
-    _toolbar->hide();
+    _toolbar->setWindowTitle(tr("ToolBar"));
+    _toolbar->setStyleSheet(QString("QToolBar{border:none;backgroud-color:rgb(0,55,0)}"));
+    _toolbar->setVisible(ReaderConfig::Instance()->toolbarState());
+    _toolbar->installEventFilter(this);
 
     _toolbar->addAction(tr("Font"), this, SLOT(select_font()));
     _toolbar->addAction(tr("Font Color"), this, SLOT(select_font_color()));
+
+    _toolbar->addSeparator();
+
     _toolbar->addAction(tr("Background Color"), this, SLOT(select_background_color()));
-    _toolbar->addAction(tr("Dark Mode"), this, SLOT(show_dark_mode()));
-
-    _toolbar->addWidget(new QLabel(tr("Line Space:"), _toolbar));
-
-    auto linespace = new QLineEdit(_toolbar);
-    _toolbar->addWidget(linespace);
-
-    linespace->setObjectName("linespace");
-    linespace->setPlaceholderText(tr("Line Space"));
-    linespace->setFixedWidth(60);
-    linespace->installEventFilter(this);
+    action = _toolbar->addAction(tr("Dark Mode"), this, SLOT(show_dark_mode()));
+    action->setCheckable(true);
+    action->setObjectName("darkmode");
+    action->setShortcut(Qt::Key_F10);
+    this->addAction(action);
 
     _toolbar->addSeparator();
-    _toolbar->addAction(tr("Full Screen"), this, SLOT(show_full_screen()));
+
+    _toolbar->addWidget(new QLabel(tr("Line Space"), _toolbar));
+    auto combo = new QComboBox(_toolbar);
+    _toolbar->addWidget(combo);
+    combo->setFixedWidth(85);
+    combo->addItem(tr("Default"), 0);
+    combo->addItem("1.0", 1.0);
+    combo->addItem("1.5", 1.5);
+    combo->addItem("2.0", 2.0);
+    combo->addItem("2.5", 2.5);
+    combo->addItem("3.0", 3.0);
+    auto linespace = ReaderConfig::Instance()->readingLineSpace();
+    for(int i = 0; i < combo->count(); i++)
+    {
+        if(combo->itemData(i).toDouble() == linespace)
+        {
+            combo->setCurrentIndex(i);
+            break;
+        }
+    }
+    connect(combo, SIGNAL(currentIndexChanged(const QString &)), this, SLOT(linespace_currentIndexChanged(const QString &)));
+
     _toolbar->addSeparator();
-    _toolbar->addAction(tr("Auto Scrolling"), this, SLOT(set_auto_scrolling()))->setObjectName("set_auto_scrolling");
+
+    action = _toolbar->addAction(tr("Full Screen"), this, SLOT(show_full_screen()));
+    action->setCheckable(true);
+    action->setShortcut(Qt::Key_F11);
+    this->addAction(action);
+
     _toolbar->addSeparator();
 
-    _toolbar->addWidget(new QLabel(tr("Jump to Ratio:"), _toolbar));
+    action = _toolbar->addAction(tr("Auto Scrolling"), this, SLOT(set_auto_scrolling()));
+    action->setCheckable(true);
+    action->setObjectName("autoscroll");
+    action->setShortcut(QKeySequence(Qt::Key_ScrollLock));
+    this->addAction(action);
+    auto edit = new QLineEdit("500", _toolbar);
+    _toolbar->addWidget(edit);
+    edit->setObjectName("autoscroll_interval");
+    edit->setFixedWidth(60);
+    _toolbar->addWidget(new QLabel("ms", _toolbar));
 
-    auto jumptoratio = new QLineEdit(_toolbar);
-    _toolbar->addWidget(jumptoratio);
+    _toolbar->addSeparator();
 
-    jumptoratio->setObjectName("jumptoratio");
-    jumptoratio->setPlaceholderText(tr("Ratio"));
-    jumptoratio->setFixedWidth(60);
-    jumptoratio->installEventFilter(this);
+    _toolbar->addWidget(new QLabel(tr("Jump to Ratio"), _toolbar));
+    edit = new QLineEdit(_toolbar);
+    _toolbar->addWidget(edit);
+
+    edit->setObjectName("jumptoratio");
+    edit->setPlaceholderText(tr("Ratio"));
+    edit->setFixedWidth(60);
+    connect(edit, SIGNAL(returnPressed()), this, SLOT(jumptoratio_returnPressed()));
 
     _toolbar->addWidget(new QLabel("%", _toolbar));
 
+    _toolbar->addSeparator();
+
+    edit = new QLineEdit(_toolbar);
+    _toolbar->addWidget(edit);
+    edit->setObjectName("findtext");
+    edit->setPlaceholderText(tr("Input to find"));
+    edit->setFixedWidth(100);
+    connect(edit, SIGNAL(returnPressed()), this, SLOT(_find_text_returnPressed()));
+    action = _toolbar->addAction(tr("Find text"), this, SLOT(_find_text_returnPressed()));
+    action->setShortcut(QKeySequence(QKeySequence::Find));
+    this->addAction(action);
+
+    _toolbar->addSeparator();
+
+    edit = new QLineEdit(_toolbar);
+    _toolbar->addWidget(edit);
+    edit->setPlaceholderText(tr("Input to search"));
+    edit->setFixedWidth(150);
+    edit->setObjectName("searchtext");
+    connect(edit, SIGNAL(returnPressed()), this, SLOT(web_search()));
+    button = new DToolButton(_toolbar);
+    _toolbar->addWidget(button);
+    button->setDefaultAction(new QAction(tr("Search"), _toolbar));
+    button->setObjectName("search");
+    connect(button->defaultAction(), SIGNAL(triggered()), this, SLOT(web_search()));
+    button->setPopupMode(QToolButton::DelayedPopup);
+    auto menu = new QMenu(button);
+    button->setMenu(menu);
+
+    auto current_engine = ReaderConfig::Instance()->searchEngine();
+    if(!current_engine.isEmpty())
+        edit->setPlaceholderText(current_engine);
+
+    auto group = new QActionGroup(this);
+    group->setExclusive(true);
+    connect(group, SIGNAL(triggered(QAction*)), this, SLOT(search_engine_select(QAction*)));
+    auto engines = searchEngines();
+    foreach(QString engine, engines)
+    {
+        auto action = menu->addAction(engine);
+        action->setCheckable(true);
+        group->addAction(action);
+
+        if(!current_engine.isEmpty() && current_engine == engine)
+        {
+            action->setChecked(true);
+        }
+    }
+
+    // 不显示，用于定义快捷键
+    action = _toolbar->addAction(tr("Boss Key"));
+    action->setVisible(false);
+    action->setObjectName("bosskey");
+    // 另创建一个用于使用
+    action = new QAction(this);
+    connect(action, &QAction::triggered, this, &MainWindow::hide);
+    action->setObjectName("bosskey_real");
+    action->setShortcut(QKeySequence("Alt+Z"));
+    this->addAction(action);
+
     // 状态栏
-    auto statusbar = new DStatusBar(this);
-    this->setStatusBar(statusbar);
+    this->statusBar()->setFixedHeight(30);
+    this->statusBar()->setStyleSheet(QString( "QStatusBar::item{border: 0px}"));
+    this->statusBar()->setVisible(ReaderConfig::Instance()->statusbarState());
+    this->statusBar()->installEventFilter(this);
 
-    statusbar->setObjectName("statusbar");
-    statusbar->setFixedHeight(30);
-    statusBar()->setStyleSheet(QString( "QStatusBar::item{border: 0px}"));
-
-    auto total_label = new QLabel(statusbar);
+    auto total_label = new QLabel(this->statusBar());
     total_label->setText(tr("Total Pages"));
-    statusbar->addPermanentWidget(total_label);
+    this->statusBar()->addPermanentWidget(total_label);
 
-    _total_pages_edit = new QLineEdit(statusbar);
-    statusbar->addPermanentWidget(_total_pages_edit);
+    _total_pages_edit = new QLineEdit(this->statusBar());
+    this->statusBar()->addPermanentWidget(_total_pages_edit);
     _total_pages_edit->setFixedWidth(50);
     _total_pages_edit->setReadOnly(true);
     _total_pages_edit->setFocusPolicy(Qt::NoFocus);
 
-    auto current_label = new QLabel(statusbar);
+    auto current_label = new QLabel(this->statusBar());
     current_label->setText(tr("Current Page"));
-    statusbar->addPermanentWidget(current_label);
+    this->statusBar()->addPermanentWidget(current_label);
 
-    _current_page_edit = new QLineEdit(statusbar);
-    statusbar->addPermanentWidget(_current_page_edit);
+    _current_page_edit = new QLineEdit(this->statusBar());
+    this->statusBar()->addPermanentWidget(_current_page_edit);
     _current_page_edit->setFixedWidth(50);
     connect(_current_page_edit, SIGNAL(returnPressed()), this, SLOT(current_page_edit_returnPressed()));
 
-    auto previous_page = new DToolButton(statusbar);
-    previous_page->setText(tr("Previous Page"));
-    statusbar->addPermanentWidget(previous_page);
-    connect(previous_page, SIGNAL(pressed()), this, SLOT(previous_page_pressed()));
-    previous_page->setShortcut(QKeySequence(Qt::Key_Left));
+    button = new DToolButton(this->statusBar());
+    this->statusBar()->addPermanentWidget(button);
+    action = new QAction(tr("Previous Page"), button);
+    button->setDefaultAction(action);
+    this->addAction(action);
+    connect(action, SIGNAL(triggered()), this, SLOT(previous_page_pressed()));
+    action->setShortcut(Qt::Key_Left);
 
-    auto next_screen = new DToolButton(statusbar);
-    next_screen->setText(tr("Next Screen"));
-    statusbar->addPermanentWidget(next_screen);
-    connect(next_screen, SIGNAL(pressed()), this, SLOT(next_screen_pressed()));
-    next_screen->setShortcut(QKeySequence(Qt::Key_Space));
+    button = new DToolButton(this->statusBar());
+    this->statusBar()->addPermanentWidget(button);
+    action = new QAction(tr("Next Screen"), button);
+    button->setDefaultAction(action);
+    this->addAction(action);
+    connect(action, SIGNAL(triggered()), this, SLOT(next_screen_pressed()));
+    action->setShortcut(Qt::Key_Space);
 
-    auto next_page = new DToolButton(statusbar);
-    next_page->setText(tr("Next Page"));
-    statusbar->addPermanentWidget(next_page);
-    connect(next_page, SIGNAL(pressed()), this, SLOT(next_page_pressed()));
-    next_page->setShortcut(QKeySequence(Qt::Key_Right));
+    button = new DToolButton(this);
+    this->statusBar()->addPermanentWidget(button);
+    action = new QAction(tr("Next Page"), button);
+    button->setDefaultAction(action);
+    this->addAction(action);
+    connect(action, SIGNAL(triggered()), this, SLOT(next_page_pressed()));
+    action->setShortcut(Qt::Key_Right);
 
     // 侧栏
-    _ldock = new QDockWidget(this);
-    this->addDockWidget(Qt::LeftDockWidgetArea, _ldock);
-    _ldock->setObjectName("leftdock");
-    _ldock->setMinimumWidth(150);
-    _ldock->setMaximumWidth(500);
-
     _ldock->setWindowTitle(tr("Library"));
     _ldock->setFeatures(QDockWidget::DockWidgetVerticalTitleBar);
     //_ldock->setFeatures(QDockWidget::NoDockWidgetFeatures);
+    _ldock->setMinimumWidth(150);
+    _ldock->setMaximumWidth(500);
+    auto width = ReaderConfig::Instance()->sidebarWidth();
+    if(width == 0)
+        width = _ldock->minimumWidth();
+    this->resizeDocks({_ldock}, {width}, Qt::Horizontal);
+    _ldock->setVisible(ReaderConfig::Instance()->sidebarState());
     _ldock->installEventFilter(this);
+    _ldock->setContextMenuPolicy(Qt::CustomContextMenu);
 
     _booklist = new DListWidget(_ldock);
     _ldock->setWidget(_booklist);
@@ -202,59 +343,64 @@ void MainWindow::make_ui()
     _booklist_menu->addAction(tr("Remove"), this, SLOT(remove_novel()));
 
     // 内容区
-    _content = new TextContent(this);
-    this->setCentralWidget(_content);
+    auto fontname = ReaderConfig::Instance()->readingFont();
+    if(!fontname.isEmpty())
+        _content->setFontFamily(fontname);
+    auto fontsize = ReaderConfig::Instance()->readingFontSize();
+    if(fontsize > 0)
+        _content->setFontPointSize(fontsize);
+    auto color = ReaderConfig::Instance()->readingFontColor();
+    if(color.red() != 0 || color.green() != 0 || color.blue() != 0)
+        _content->setTextColor(color);
+    color = ReaderConfig::Instance()->readingBackgroundColor();
+    if(color.red() != 0 || color.green() != 0 || color.blue() != 0)
+        //_content->setTextBackgroundColor(color);
+        _content->setStyleSheet(QString("background-color:rgb(%1, %2, %3)").arg(color.red()).arg(color.green()).arg(color.blue()));
+    _content->textCursor().blockFormat().setBottomMargin(ReaderConfig::Instance()->readingLineSpace());
 
-    _content->setReadOnly(true);
-    _content->setMinimumWidth(300);
-    _content->setFocusPolicy(Qt::NoFocus);
-    _content->setFontPointSize(12);
-}
-
-void MainWindow::init_ui()
-{
-    this->resize(ReaderConfig::Instance()->windowSize());
-    this->setWindowState(static_cast<Qt::WindowState>(ReaderConfig::Instance()->windowState()));
-
-    auto width = ReaderConfig::Instance()->sidebarWidth();
-    if(width == 0)
-        width = _ldock->minimumWidth();
-    this->resizeDocks({_ldock}, {width}, Qt::Horizontal);
+    // 通知栏图标
+    _tray_icon = new QSystemTrayIcon(app->productIcon(), this);
+    connect(_tray_icon, SIGNAL(activated(QSystemTrayIcon::ActivationReason)), this, SLOT(tray_icon_activated(QSystemTrayIcon::ActivationReason)));
+    _tray_icon->setToolTip(app->productName());
+    _tray_icon->show();
 }
 
 void MainWindow::init_shortcuts()
 {
     // 标题栏按钮
     auto topbar_actions = this->titlebar()->findChildren<QToolButton*>();
-    foreach(QToolButton *action, topbar_actions)
+    foreach(QToolButton *button, topbar_actions)
     {
-        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(button->text());
         if(shortcut.isEmpty())
             continue;
 
-        action->setShortcut(shortcut);
+        button->setShortcut(shortcut);
     }
 
     // 工具栏
     auto toolbar_actions = _toolbar->findChildren<QToolButton*>();
-    foreach(QToolButton *action, toolbar_actions)
+    foreach(QToolButton *button, toolbar_actions)
     {
-        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(button->text());
         if(shortcut.isEmpty())
             continue;
 
-        action->setShortcut(shortcut);
+        if(button->defaultAction()->objectName() == "bosskey")
+            this->findChild<QAction*>("bosskey_real")->setShortcut(shortcut);
+        else
+            button->defaultAction()->setShortcut(shortcut);
     }
 
     // 状态栏
     auto statusbar_actions = this->statusBar()->findChildren<QToolButton*>();
-    foreach(QToolButton *action, statusbar_actions)
+    foreach(QToolButton *button, statusbar_actions)
     {
-        auto shortcut = ReaderConfig::Instance()->shortcutKeys(action->text());
+        auto shortcut = ReaderConfig::Instance()->shortcutKeys(button->text());
         if(shortcut.isEmpty())
             continue;
 
-        action->setShortcut(shortcut);
+        button->defaultAction()->setShortcut(shortcut);
     }
 }
 
@@ -290,8 +436,28 @@ void MainWindow::init_data()
 void MainWindow::init_others()
 {
     _autoscroll_timer = new QTimer(this);
-    _autoscroll_timer->setInterval(500);
     connect(_autoscroll_timer, SIGNAL(timeout()), this, SLOT(autoscroll_timer_timeout()));
+}
+
+void MainWindow::showDSettingsDialog()
+{
+    auto json = ReaderConfig::Instance()->getDSettingsJson();
+    auto sts = DSettings::fromJson(json);
+    connect(sts, SIGNAL(valueChanged(const QString &, const QVariant &)), this, SLOT(dSettings_valueChanged(const QString &, const QVariant &)));
+
+    DSettingsDialog dlg(this);
+    dlg.updateSettings(sts);
+    dlg.exec();
+}
+
+void MainWindow::dSettings_valueChanged(const QString &key, const QVariant &value)
+{
+    // basic.Reading.放开那个女巫"
+    auto names = key.split('.', QString::SkipEmptyParts);
+    if(names.length() != 3)
+        return;
+
+    ReaderConfig::Instance()->setValue(names[1], names[2], value);
 }
 
 void MainWindow::library_clicked()
@@ -301,7 +467,7 @@ void MainWindow::library_clicked()
 
 void MainWindow::import_file()
 {
-    auto lst = DFileDialog::getOpenFileNames(this, "选择文件", ".", "Text Files (*.txt)");
+    auto lst = DFileDialog::getOpenFileNames(this, tr("Select Files"), ".", "Text Files (*.txt)");
     if(lst.empty())
         return;
 
@@ -322,7 +488,7 @@ void MainWindow::import_file()
 
 void MainWindow::import_directory()
 {
-    auto dirpath = DFileDialog::getExistingDirectory(this, "选择文件", ".");
+    auto dirpath = DFileDialog::getExistingDirectory(this, tr("Select Directory"), ".");
     if(dirpath.isEmpty())
         return;
 
@@ -350,7 +516,7 @@ void MainWindow::remove_novel()
     if(item == nullptr)
         return;
 
-    if(QMessageBox::question(this, "删除确认", "是否从书库中删除此项？") != QMessageBox::Yes)
+    if(QMessageBox::question(this, tr("Remove Confirm"), tr("You are going to remove this item, continue?")) != QMessageBox::Yes)
         return;
 
     ReaderConfig::Instance()->removeBook(item->text());
@@ -367,6 +533,49 @@ void MainWindow::remove_novel()
     item = _booklist->takeItem(row);
     if(item != nullptr)
         delete item;
+}
+
+void MainWindow::history_aboutToShow()
+{
+    _reading_history_menu->clear();
+
+    auto items = ReaderConfig::Instance()->readingHistory();
+    if(items.isEmpty())
+        return;
+
+    auto name = ReaderConfig::Instance()->readingHistoryItem(items.last());
+    while(name == _browser->name())
+    {
+        items.pop_back();
+
+        if(items.isEmpty())
+            break;
+
+        name = ReaderConfig::Instance()->readingHistoryItem(items.last());
+    }
+
+    if(items.isEmpty())
+        return;
+
+    int count = 0;
+    QString current;
+    foreach(QString item, items)
+    {
+        name = ReaderConfig::Instance()->readingHistoryItem(item);
+        if(current == name)
+            continue;
+
+        current = name;
+
+        _reading_history_menu->addAction(name, this, SLOT(history_item_triggered()))->setCheckable(true);
+
+        ++count;
+        if(count == 10)
+            break;
+    }
+
+    _reading_history_menu->addSeparator();
+    _reading_history_menu->addAction(tr("Clear"), this, SLOT(clear_history()));
 }
 
 void MainWindow::show_bookmarks()
@@ -412,7 +621,7 @@ void MainWindow::booklist_currentRowChanged(int currentRow)
 
     if(!_browser->isAvailable())
     {
-        QMessageBox box(QMessageBox::Information, "文件未找到", QString("以下文件未找到:\n%1").arg(filepath), QMessageBox::Ok, this);
+        QMessageBox box(QMessageBox::Information, tr("File not found"), QString(tr("The following file was not found:\n%1")).arg(filepath), QMessageBox::Ok, this);
         box.exec();
         return;
     }
@@ -482,10 +691,10 @@ void MainWindow::current_page_edit_returnPressed()
     _content->setText(_browser->currentPageContent());
 }
 
-void MainWindow::view_shotcuts()
+void MainWindow::shotcut_settings()
 {
-    ReaderSettings dlg(this);
-    if(dlg.exec() == QDialog::Accepted)
+    ShotcutSettings dlg(this);
+    if(dlg.exec() == 0)
         init_shortcuts();
 }
 
@@ -515,65 +724,165 @@ void MainWindow::booklist_customContextMenuRequested(const QPoint &pos)
 void MainWindow::select_font()
 {
     bool ok = false;
-    auto font = QFontDialog::getFont(&ok, _content->font(), this);
+    auto font = QFontDialog::getFont(&ok, _content->textCursor().charFormat().font(), this);
     if(!ok)
         return;
 
     _content->setFont(font);
+
+    ReaderConfig::Instance()->setReadingFont(font.family());
+    ReaderConfig::Instance()->setReadingFontSize(font.pointSize());
 }
 
 void MainWindow::select_font_color()
 {
-    auto color = QColorDialog::getColor(_content->textColor(), this);
-    _content->setTextColor(color);
+    auto color = QColorDialog::getColor(_content->palette().text().color(), this);
+    if(!color.isValid())
+        return;
+
+    auto pal = _content->palette();
+    pal.setColor(QPalette::Text, color);
+    _content->setPalette(pal);
+
+    ReaderConfig::Instance()->setReadingFontColor(color);
 }
 
 void MainWindow::select_background_color()
 {
-    auto color = QColorDialog::getColor(_content->textColor(), this);
-    _content->setTextBackgroundColor(color);
+    auto color = QColorDialog::getColor(_content->palette().background().color(), this);
+    if(!color.isValid())
+        return;
+
+    _content->setStyleSheet(QString("background-color:rgb(%1, %2, %3)").arg(color.red()).arg(color.green()).arg(color.blue()));
+
+    ReaderConfig::Instance()->setReadingBackgroundColor(color);
+
+//    const QString fileName = "test.jpg";
+//    _content->setStyleSheet(QString("background-image: url(%1)").arg(fileName));
 }
 
 void MainWindow::show_dark_mode()
 {
-    _content->setTextBackgroundColor(QColor(Qt::GlobalColor::black));
-    _content->setTextColor(QColor(Qt::GlobalColor::lightGray));
-}
-
-void MainWindow::show_full_screen()
-{
-    _state_before_fullscreen = this->saveState();
-    _window_state_before_fullscreen = this->windowState();
-
-    this->showFullScreen();
-    _ldock->hide();
-    _toolbar->hide();
-    this->setFocus();
-}
-
-void MainWindow::set_auto_scrolling()
-{
-    auto action = _toolbar->findChild<QAction*>("set_auto_scrolling");
+    auto action = _toolbar->findChild<QAction*>("darkmode");
     if(action == nullptr)
         return;
 
     if(action->isChecked())
     {
-        action->setChecked(false);
-        _autoscroll_timer->stop();
+        _style_before_darkmode = _content->styleSheet();
+        _content->setStyleSheet("background-color:rgb(50, 50, 50);color:rgb(180, 180, 180);");
+    }
+    else
+        _content->setStyleSheet(_style_before_darkmode);
+}
+
+void MainWindow::show_full_screen()
+{
+    if(this->isFullScreen())
+    {
+        this->showNormal();
+
+        this->restoreState(_state_before_fullscreen);
+        this->setWindowState(_window_state_before_fullscreen);
+
+        _toolbar->setVisible(_toolbar_menu->findChild<QAction*>("toolbar")->isChecked());
+        this->statusBar()->setVisible(_toolbar_menu->findChild<QAction*>("statusbar")->isChecked());
+        _ldock->setVisible(_toolbar_menu->findChild<QAction*>("library")->isChecked());
     }
     else
     {
-        action->setChecked(true);
-        _autoscroll_timer->start();
+        _state_before_fullscreen = this->saveState();
+        _window_state_before_fullscreen = this->windowState();
+
+        this->showFullScreen();
+
+        _ldock->hide();
+        _toolbar->hide();
+        this->statusBar()->hide();
     }
+
+    this->setFocus();
+}
+
+void MainWindow::set_auto_scrolling()
+{
+    auto action = _toolbar->findChild<QAction*>("autoscroll");
+
+    if(action->isChecked())
+    {
+        auto edit = _toolbar->findChild<QLineEdit*>("autoscroll_interval");
+        auto txt = edit->text().trimmed();
+
+        bool ok = false;
+        auto interval = txt.toInt(&ok);
+        if(ok)
+        {
+            if(interval < 100)
+                interval = 100;
+        }
+        else
+        {
+            edit->setText("500");
+            interval = 500;
+        }
+
+        auto cursor = _content->cursorForPosition(QPoint(0, _content->height()));
+        _content->setTextCursor(cursor);
+
+        _autoscroll_timer->start(interval);
+    }
+    else
+        _autoscroll_timer->stop();
 }
 
 void MainWindow::autoscroll_timer_timeout()
 {
-    _content->moveCursor(QTextCursor::Down);
     if(_content->textCursor().atEnd())
+    {
+        _autoscroll_timer->stop();
+        QTimer::singleShot(1000, this, SLOT(autoscroll_wait_restart()));
+        return;
+    }
+    else if(_content->textCursor().atStart())
+    {
+        _autoscroll_timer->stop();
+        QTimer::singleShot(2000, this, SLOT(autoscroll_wait_restart()));
+        return;
+    }
+
+    _content->moveCursor(QTextCursor::Down);
+}
+
+void MainWindow::autoscroll_wait_restart()
+{
+    auto action = _toolbar->findChild<QAction*>("autoscroll");
+    if(!action->isChecked())
+        return;
+
+    if(_content->textCursor().atEnd())
+    {
         next_page_pressed();
+    }
+    else if(_content->textCursor().atStart())
+    {
+        auto cursor = _content->cursorForPosition(QPoint(0, _content->height()));
+        _content->setTextCursor(cursor);
+    }
+
+    if(action->isChecked())
+        _autoscroll_timer->start();
+}
+
+void MainWindow::_find_text_returnPressed()
+{
+    _toolbar->show();
+
+    auto edit = _toolbar->findChild<QLineEdit*>("findtext");
+    edit->setFocus();
+
+    auto txt = edit->text().trimmed();
+    if(!txt.isEmpty())
+        _content->find(txt);
 }
 
 void MainWindow::view_instructions()
@@ -586,6 +895,115 @@ void MainWindow::send_feedback()
     QDesktopServices::openUrl(QUrl("https://www.listera.top"));
 }
 
+void MainWindow::history_item_triggered()
+{
+    auto actions = _reading_history_menu->findChildren<QAction*>();
+    foreach(QAction *action, actions)
+    {
+        if(action->isChecked())
+        {
+            auto items = _booklist->findItems(action->text(), Qt::MatchFlag::MatchExactly);
+            if(!items.isEmpty())
+            {
+                _booklist->setCurrentItem(items.first());
+            }
+
+            action->setChecked(false);
+            break;
+        }
+    }
+}
+
+void MainWindow::clear_history()
+{
+    if(QMessageBox::question(this, tr("Confirm"), tr("You are going to clear the reading history, continue?")) != QMessageBox::Yes)
+        return;
+
+    ReaderConfig::Instance()->clearHistory();
+}
+
+void MainWindow::toolbar_menu_aboutToShow()
+{
+    _toolbar_menu->findChild<QAction*>("toolbar")->setChecked(_toolbar->isVisible());
+    _toolbar_menu->findChild<QAction*>("statusbar")->setChecked(this->statusBar()->isVisible());
+    _toolbar_menu->findChild<QAction*>("library")->setChecked(_ldock->isVisible());
+}
+
+void MainWindow::linespace_currentIndexChanged(const QString &text)
+{
+    auto txt = text.trimmed();
+    bool ok = false;
+    auto linespace = txt.toDouble(&ok);
+    if(ok)
+    {
+        QTextBlockFormat textBlockFormat;
+        textBlockFormat.setBottomMargin(linespace);
+        _content->textCursor().setBlockFormat(textBlockFormat);
+    }
+    else
+    {
+        QTextBlockFormat textBlockFormat;
+        textBlockFormat.setBottomMargin(0);
+        _content->textCursor().setBlockFormat(textBlockFormat);
+    }
+
+    ReaderConfig::Instance()->setReadingLineSpace(static_cast<float>(linespace));
+}
+
+void MainWindow::jumptoratio_returnPressed()
+{
+    auto edit = _toolbar->findChild<QLineEdit*>("jumptoratio");
+
+    auto txt = edit->text().trimmed();
+    bool ok = false;
+    auto ratio = txt.toFloat(&ok);
+    if(ok)
+    {
+        _browser->moveToRatio(ratio / 100);
+
+        _content->setText(_browser->currentPageContent());
+        _current_page_edit->setText(QString("%1").arg(_browser->currentPage()));
+    }
+}
+
+void MainWindow::web_search()
+{
+    auto edit = _toolbar->findChild<QLineEdit*>("searchtext");
+    auto txt = edit->text().trimmed();
+    if(txt.isEmpty())
+        return;
+
+    auto engine = ReaderConfig::Instance()->searchEngine();
+    startWebSearch(txt, engine);
+}
+
+void MainWindow::search_engine_select(QAction *action)
+{
+    auto edit = _toolbar->findChild<QLineEdit*>("searchtext");
+    edit->setPlaceholderText(action->text());
+
+    ReaderConfig::Instance()->setSearchEngine(action->text());
+}
+
+void MainWindow::tray_icon_activated(QSystemTrayIcon::ActivationReason reason)
+{
+    switch (reason)
+    {
+    case QSystemTrayIcon::Trigger:
+        if(_last_tray_active_time.addMSecs(300) > QDateTime::currentDateTime())
+            tray_icon_activated(QSystemTrayIcon::DoubleClick);
+        _last_tray_active_time = QDateTime::currentDateTime();
+        break;
+    case QSystemTrayIcon::DoubleClick:
+        this->setVisible(!this->isVisible());
+        break;
+    case QSystemTrayIcon::Context:
+        break;
+    default:
+        break;
+    }
+}
+
 bool MainWindow::eventFilter(QObject *target, QEvent *event)
 {
     if(event->type() == QEvent::KeyPress)
@@ -594,47 +1012,46 @@ bool MainWindow::eventFilter(QObject *target, QEvent *event)
 
         if(keve->key() == Qt::Key_Escape)
         {
-            if(this->isFullScreen())
-            {
-                this->showNormal();
-                this->restoreState(_state_before_fullscreen);
-                this->setWindowState(_window_state_before_fullscreen);
-            }
+            //show_full_screen();
+            this->setFocus();
         }
         else if(keve->key() == Qt::Key_Return || keve->key() == Qt::Key_Enter)
         {
-            if(target->objectName() == "linespace")
-            {
-                auto edit = static_cast<QLineEdit*>(target);
 
-                auto txt = edit->text().trimmed();
-                bool ok = false;
-                auto linespace = txt.toDouble(&ok);
-                if(ok)
+        }
+        else if(event->type() == QEvent::KeyPress)
+        {
+            auto keve = static_cast<QKeyEvent*>(event);
+
+            if(target == this)
+            {
+                if(keve->key() == Qt::Key_Up)
                 {
-                    QTextBlockFormat textBlockFormat;
-                    textBlockFormat.setBottomMargin(linespace);
-                    _content->textCursor().setBlockFormat(textBlockFormat);
+                    auto cursor = _content->cursorForPosition(QPoint(0, 0));
+                    _content->setTextCursor(cursor);
+                    _content->moveCursor(QTextCursor::Up);
+                    _content->moveCursor(QTextCursor::Up);
+                    _content->moveCursor(QTextCursor::Up);
+                    _content->moveCursor(QTextCursor::Up);
+                    _content->moveCursor(QTextCursor::Up);
+                    _content->moveCursor(QTextCursor::Up);
                 }
-            }
-            else if(target->objectName() == "jumptoratio")
-            {
-                auto edit = static_cast<QLineEdit*>(target);
-
-                auto txt = edit->text().trimmed();
-                bool ok = false;
-                auto ratio = txt.toFloat(&ok);
-                if(ok)
+                else if(keve->key() == Qt::Key_Down)
                 {
-                    _browser->moveToRatio(ratio / 100);
-
-                    _content->setText(_browser->currentPageContent());
-                    _current_page_edit->setText(QString("%1").arg(_browser->currentPage()));
+                    auto cursor = _content->cursorForPosition(QPoint(0, this->height()));
+                    _content->setTextCursor(cursor);
+                    _content->moveCursor(QTextCursor::Down);
+                    _content->moveCursor(QTextCursor::Down);
                 }
             }
         }
-
-        this->setFocus();
+    }
+    else if(event->type() == QEvent::ContextMenu)
+    {
+        if(target == _ldock || target == _toolbar || target == this->statusBar())
+        {
+            _toolbar_menu->exec(QCursor::pos());
+        }
     }
 
     // 处理其他消息
@@ -648,5 +1065,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
     // 保存配置
     ReaderConfig::Instance()->setWindowSize(this->size());
     ReaderConfig::Instance()->setWindowState(static_cast<int>(this->windowState()));
+    ReaderConfig::Instance()->setSidebarState(_ldock->isVisible());
     ReaderConfig::Instance()->setSidebarWidth(_ldock->width());
+    ReaderConfig::Instance()->setToolbarState(_toolbar->isVisible());
+    ReaderConfig::Instance()->setStatusbarState(this->statusBar()->isVisible());
+
+    //this->hide();
+    //event->ignore();
 }

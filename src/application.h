@@ -17,6 +17,7 @@ public:
 
 private:
     static void _messageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg);
+    void _aboutToQuit();
 };
 
 #endif // APPLICATION_H

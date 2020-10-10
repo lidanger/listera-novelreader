@@ -11,13 +11,14 @@ SOURCES += \
         main.cpp \
     mainwindow.cpp \
     application.cpp \
-    textcontent.cpp \
     readerconfig.cpp \
     bookcontents.cpp \
     bookbrowser.cpp \
     utils.cpp \
-    readersettings.cpp \
-    bookmarks.cpp
+    bookmarks.cpp \
+    dsettingsbuilder.cpp \
+    shotcutsettings.cpp \
+    textcontent.cpp
 
 RESOURCES +=         ../resources/resources.qrc
 
@@ -26,10 +27,11 @@ TRANSLATIONS = ../translations/listera-novelreader_zh_CN.ts
 HEADERS += \
     mainwindow.h \
     application.h \
-    textcontent.h \
     readerconfig.h \
     bookcontents.h \
     utils.h \
     bookbrowser.h \
-    readersettings.h \
-    bookmarks.h
+    bookmarks.h \
+    dsettingsbuilder.h \
+    shotcutsettings.h \
+    textcontent.h
