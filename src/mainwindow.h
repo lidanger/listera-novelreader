@@ -21,7 +21,6 @@ public:
     MainWindow();
 
 private:
-    void make_ui();
     void init_ui();
     void init_shortcuts();
     void init_data();
@@ -54,10 +53,12 @@ private slots:
     void booklist_customContextMenuRequested(const QPoint &pos);
 
     void select_font();
-    void select_font_color();
+    void select_text_color();
     void select_background_color();
     void show_dark_mode();
     void show_full_screen();
+    void linespace_valueChanged(double value);
+    void jumptoratio_returnPressed();
     void set_auto_scrolling();
     void autoscroll_timer_timeout();
     void autoscroll_wait_restart();
@@ -70,9 +71,6 @@ private slots:
     void clear_history();
 
     void toolbar_menu_aboutToShow();
-
-    void linespace_currentIndexChanged(const QString &text);
-    void jumptoratio_returnPressed();
 
     void web_search();
     void search_engine_select(QAction *action);
@@ -103,8 +101,6 @@ private:
     Qt::WindowStates _window_state_before_fullscreen;
 
     QTimer *_autoscroll_timer;
-
-    QString _style_before_darkmode;
 
     QSystemTrayIcon *_tray_icon;
     QDateTime _last_tray_active_time;

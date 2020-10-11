@@ -98,31 +98,34 @@ public:
     inline int statusbarState() { return _getValue("Window", "StatusbarState").toInt(); }
 
     // 阅读视图状态
-    inline void setReadingFont(QString font_name) { _setValue("Reading", "FontName", font_name); }
-    inline QString readingFont() { return _getValue("Reading", "FontName").toString(); }
+    inline void setFontFamily(QString font_name) { _setValue("Reading", "FontFamily", font_name); }
+    inline QString fontFamily() { return _getValue("Reading", "FontFamily").toString(); }
 
-    inline void setReadingFontSize(int font_size) { _setValue("Reading", "FontSize", font_size); }
-    inline int readingFontSize() { return _getValue("Reading", "FontSize").toInt(); }
+    inline void setFontSize(double font_size) { _setValue("Reading", "FontSize", font_size); }
+    inline double fontSize() { return _getValue("Reading", "FontSize").toDouble(); }
 
-    void setReadingFontColor(QColor color);
-    QColor readingFontColor();
+    void setTextColor(QColor color);
+    QColor textColor();
 
-    inline void setReadingCharacterSpace(int space) { _setValue("Reading", "CharacterSpace", space); }
-    inline int readingCharacterSpace() { return _getValue("Reading", "CharacterSpace").toInt(); }
+    inline void setCharacterSpace(double space) { _setValue("Reading", "CharacterSpace", space); }
+    inline double characterSpace() { return _getValue("Reading", "CharacterSpace").toDouble(); }
 
-    inline void setReadingLineSpace(double space) { _setValue("Reading", "LineSpace", space); }
-    inline double readingLineSpace() { return _getValue("Reading", "LineSpace").toDouble(); }
+    inline void setLineSpace(double space) { _setValue("Reading", "LineSpace", space); }
+    inline double lineSpace() { return _getValue("Reading", "LineSpace").toDouble(); }
 
-    inline void setRedingParagraphSpace(int space) { _setValue("Reading", "ParagraphSpace", space); }
-    inline int readingParagraphSpace() { return _getValue("Reading", "ParagraphSpace").toInt(); }
+    inline void setParagraphSpace(int space) { _setValue("Reading", "ParagraphSpace", space); }
+    inline int paragraphSpace() { return _getValue("Reading", "ParagraphSpace").toInt(); }
 
-    void setReadingBackgroundColor(QColor color);
-    QColor readingBackgroundColor();
-    void setReadingBackgroundPicture(QString file_path);
-    QString readingBackgroundPicture() { return _getValue("Reading", "BackgroundPicture").toString(); }
+    void setBackgroundColor(QColor color);
+    QColor backgroundColor();
+    void setBackgroundPicture(QString file_path);
+    QString backgroundPicture() { return _getValue("Reading", "BackgroundPicture").toString(); }
 
-    inline void setReadingDarkMode(int state) { _setValue("Reading", "DarkMode", state); }
-    inline int readingDarkMode() { return _getValue("Reading", "DarkMode").toInt(); }
+    inline void setDarkMode(bool state) { _setValue("Reading", "DarkMode", state); }
+    inline bool darkMode() { return _getValue("Reading", "DarkMode").toBool(); }
+
+    inline void setRemoveEmptyLine(bool remove) { _setValue("Reading", "RemoveEmptyLine", remove); }
+    inline bool removeEmptyLine() { return _getValue("Reading", "RemoveEmptyLine").toBool(); }
 
     // 快捷键
     inline void setShortcut(QString function_name, QString keys) { _setValue("Shotcuts", function_name, keys); }

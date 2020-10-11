@@ -134,7 +134,7 @@
     </message>
     <message>
         <source>Font Color</source>
-        <translation>字体颜色</translation>
+        <translation type="vanished">字体颜色</translation>
     </message>
     <message>
         <source>Paging Mode</source>
@@ -315,7 +315,11 @@
     </message>
     <message>
         <source>Default</source>
-        <translation>默认</translation>
+        <translation type="vanished">默认</translation>
+    </message>
+    <message>
+        <source>Text Color</source>
+        <translation>文字颜色</translation>
     </message>
 </context>
 <context>

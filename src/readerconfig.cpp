@@ -51,25 +51,25 @@ void ReaderConfig::addBookmark(QString book_name, int page)
     _setValue("Bookmark", key, QDateTime::currentDateTime().toString("yyyyMMddHHmmss"));
 }
 
-void ReaderConfig::setReadingFontColor(QColor color)
+void ReaderConfig::setTextColor(QColor color)
 {
-    _setValue("Reading", "FontColorR", color.red());
-    _setValue("Reading", "FontColorG", color.green());
-    _setValue("Reading", "FontColorB", color.blue());
-    _setValue("Reading", "FontColorA", color.alpha());
+    _setValue("Reading", "TextColorR", color.red());
+    _setValue("Reading", "TextColorG", color.green());
+    _setValue("Reading", "TextColorB", color.blue());
+    _setValue("Reading", "TextColorA", color.alpha());
 }
 
-QColor ReaderConfig::readingFontColor()
+QColor ReaderConfig::textColor()
 {
     QColor color;
-    color.setRed(_getValue("Reading", "FontColorR").toInt());
-    color.setGreen(_getValue("Reading", "FontColorG").toInt());
-    color.setBlue(_getValue("Reading", "FontColorB").toInt());
-    color.setAlpha(_getValue("Reading", "FontColorA").toInt());
+    color.setRed(_getValue("Reading", "TextColorR").toInt());
+    color.setGreen(_getValue("Reading", "TextColorG").toInt());
+    color.setBlue(_getValue("Reading", "TextColorB").toInt());
+    color.setAlpha(_getValue("Reading", "TextColorA").toInt());
     return color;
 }
 
-void ReaderConfig::setReadingBackgroundColor(QColor color)
+void ReaderConfig::setBackgroundColor(QColor color)
 {
     _setValue("Reading", "BackgroundColorR", color.red());
     _setValue("Reading", "BackgroundColorG", color.green());
@@ -77,7 +77,7 @@ void ReaderConfig::setReadingBackgroundColor(QColor color)
     _setValue("Reading", "BackgroundColorA", color.alpha());
 }
 
-QColor ReaderConfig::readingBackgroundColor()
+QColor ReaderConfig::backgroundColor()
 {
     QColor color;
     color.setRed(_getValue("Reading", "BackgroundColorR").toInt());
@@ -87,7 +87,7 @@ QColor ReaderConfig::readingBackgroundColor()
     return color;
 }
 
-void ReaderConfig::setReadingBackgroundPicture(QString file_path)
+void ReaderConfig::setBackgroundPicture(QString file_path)
 {
     if (!QFile::exists(file_path))
     {

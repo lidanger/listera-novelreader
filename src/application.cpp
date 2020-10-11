@@ -16,7 +16,7 @@ Application::Application(int &argc, char **argv)
     // 相关信息
     this->setOrganizationName("listera");
     this->setApplicationName("listera-novelreader");
-    this->setApplicationVersion("1.0.3.16");
+    this->setApplicationVersion("1.0.4.1");
     this->setProductIcon(QIcon(":/images/logo.png"));
     this->setApplicationHomePage("https://www.listera.top");
 

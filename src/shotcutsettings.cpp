@@ -56,6 +56,7 @@ void ShotcutSettings::init_data()
         auto item = new QListWidgetItem(_shortcut_list);
         _shortcut_list->addItem(item);
         item->setSizeHint(QSize(100, 50));
+        item->setData(Qt::UserRole, button->objectName());
 
         auto widget = new QWidget(_shortcut_list);
         _shortcut_list->setItemWidget(item, widget);
@@ -91,6 +92,7 @@ void ShotcutSettings::init_data()
             auto item = new QListWidgetItem(_shortcut_list);
             _shortcut_list->addItem(item);
             item->setSizeHint(QSize(100, 50));
+            item->setData(Qt::UserRole, button->defaultAction()->objectName());
 
             auto widget = new QWidget(_shortcut_list);
             _shortcut_list->setItemWidget(item, widget);
@@ -124,6 +126,7 @@ void ShotcutSettings::init_data()
         auto item = new QListWidgetItem(_shortcut_list);
         _shortcut_list->addItem(item);
         item->setSizeHint(QSize(100, 50));
+        item->setData(Qt::UserRole, button->defaultAction()->objectName());
 
         auto widget = new QWidget(_shortcut_list);
         _shortcut_list->setItemWidget(item, widget);
@@ -155,19 +158,21 @@ void ShotcutSettings::onButtonClicked(int index, const QString &text)
     // 保存修改
     for(int i = 0; i < _shortcut_list->count(); i++)
     {
-        auto row = _shortcut_list->itemWidget(_shortcut_list->item(i));
+        auto item = _shortcut_list->item(i);
+
+        auto row = _shortcut_list->itemWidget(item);
         if(row == nullptr)
             continue;
 
-        auto label = row->findChild<DLabel*>();
-        if(label == nullptr)
+        auto obj_name = item->data(Qt::UserRole).toString();
+        if(obj_name.isEmpty())
             continue;
 
         auto edit = row->findChild<QKeySequenceEdit*>();
         if(edit == nullptr)
             continue;
 
-        ReaderConfig::Instance()->setShortcut(label->text(), edit->keySequence().toString());
+        ReaderConfig::Instance()->setShortcut(obj_name, edit->keySequence().toString());
     }
 
     this->accept();
