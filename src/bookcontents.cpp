@@ -1,5 +1,7 @@
 #include "bookcontents.h"
+#include "readerconfig.h"
 
+#include <QAction>
 #include <QBoxLayout>
 #include <QFile>
 #include <QGroupBox>
@@ -49,8 +51,14 @@ BookContents::BookContents(BookBrowser *browser, QWidget *parent)
     _preview_text = new QTextBrowser(preview_group);
     preview_layout->addWidget(_preview_text);
 
+    auto action = new QAction(this);
+    connect(action, &QAction::triggered, this, &DDialog::reject);
+    action->setShortcut(QKeySequence(ReaderConfig::Instance()->shortcutKeys("viewcontents")));
+    this->addAction(action);
+
     // 预览
     _toc_list->setCurrentRow(_browser->currentPage());
+    _toc_list->setFocus();
 }
 
 void BookContents::toc_list_currentRowChanged(int currentRow)
