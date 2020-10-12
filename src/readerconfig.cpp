@@ -52,6 +52,19 @@ void ReaderConfig::addBookmark(QString book_name, int page, QString page_title)
     _setValue("Bookmark", key, QDateTime::currentDateTime().toString("yyyyMMddHHmmss"));
 }
 
+void ReaderConfig::setWindowSize(QSize size)
+{
+    _setValue("Window", "Width", size.width());
+    _setValue("Window", "Height", size.height());
+}
+
+QSize ReaderConfig::windowSize()
+{
+    auto width = _getValue("Window", "Width", 1000).toInt();
+    auto height = _getValue("Window", "Height", 600).toInt();
+    return QSize(width, height);
+}
+
 void ReaderConfig::setTextColor(QColor color)
 {
     _setValue("Reading", "TextColorR", color.red());
@@ -63,10 +76,10 @@ void ReaderConfig::setTextColor(QColor color)
 QColor ReaderConfig::textColor()
 {
     QColor color;
-    color.setRed(_getValue("Reading", "TextColorR").toInt());
-    color.setGreen(_getValue("Reading", "TextColorG").toInt());
-    color.setBlue(_getValue("Reading", "TextColorB").toInt());
-    color.setAlpha(_getValue("Reading", "TextColorA").toInt());
+    color.setRed(_getValue("Reading", "TextColorR", 0).toInt());
+    color.setGreen(_getValue("Reading", "TextColorG", 0).toInt());
+    color.setBlue(_getValue("Reading", "TextColorB", 0).toInt());
+    color.setAlpha(_getValue("Reading", "TextColorA", 255).toInt());
     return color;
 }
 
@@ -81,10 +94,10 @@ void ReaderConfig::setBackgroundColor(QColor color)
 QColor ReaderConfig::backgroundColor()
 {
     QColor color;
-    color.setRed(_getValue("Reading", "BackgroundColorR").toInt());
-    color.setGreen(_getValue("Reading", "BackgroundColorG").toInt());
-    color.setBlue(_getValue("Reading", "BackgroundColorB").toInt());
-    color.setAlpha(_getValue("Reading", "BackgroundColorA").toInt());
+    color.setRed(_getValue("Reading", "BackgroundColorR", 204).toInt());
+    color.setGreen(_getValue("Reading", "BackgroundColorG", 250).toInt());
+    color.setBlue(_getValue("Reading", "BackgroundColorB", 226).toInt());
+    color.setAlpha(_getValue("Reading", "BackgroundColorA", 255).toInt());
     return color;
 }
 
