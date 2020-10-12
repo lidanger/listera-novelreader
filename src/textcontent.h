@@ -66,7 +66,7 @@ private:
     QColor _text_color;
     QColor _background_color;
     QString _background_image_file;
-    double _line_space = 1;
+    double _line_space = 1.1;
     int _para_space = 0;
     double _char_space = 2;
     bool _remove_empty_line = false;

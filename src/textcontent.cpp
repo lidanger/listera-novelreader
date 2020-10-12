@@ -180,9 +180,6 @@ void TextContent::setBackgroundColor(const QColor &c)
     if(!c.isValid())
         return;
 
-    if(c.red() == 0 && c.green() == 0 && c.blue() == 0)
-        return;
-
     _background_color = c;
     refresh();
 }
@@ -195,7 +192,7 @@ void TextContent::setBackgroundImage(const QString &file_path)
 
 void TextContent::setLineSpacing(double spacing)
 {
-    if(_line_space < 1)
+    if(spacing < 1)
         return;
 
     _line_space = spacing;
@@ -204,12 +201,18 @@ void TextContent::setLineSpacing(double spacing)
 
 void TextContent::setCharSpacing(double spacing)
 {
+    if(spacing < 0)
+        return;
+
     _char_space = spacing;
     refresh();
 }
 
 void TextContent::setParagraphSpaceing(int spacing)
 {
+    if(spacing < 0)
+        return;
+
     _para_space = spacing;
     refresh();
 }
@@ -283,9 +286,6 @@ void TextContent::setText(const QString &text)
 void TextContent::setTextColor(const QColor &c)
 {
     if(!c.isValid())
-        return;
-
-    if(c.red() == 0 && c.green() == 0 && c.blue() == 0)
         return;
 
     _text_color = c;

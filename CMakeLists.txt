@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
 
 project(listera-novelreader 
-    VERSION 1.1.6.2
+    VERSION 1.1.8
     DESCRIPTION "A Chinese novel reader for txt files"
     HOMEPAGE_URL "https://gitee.com/lidanger/listera-novelreader"
     LANGUAGES "CXX")
