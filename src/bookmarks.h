@@ -3,6 +3,7 @@
 
 #include <DDialog>
 #include <QTableView>
+#include <QTime>
 
 DWIDGET_USE_NAMESPACE
 
@@ -21,10 +22,13 @@ private slots:
     void remove_triggered();
     void clear_triggered();
     void table_customContextMenuRequested(const QPoint &pos);
+    void table_doubleClicked(const QModelIndex &index);
 
 private:
     QTableView *_table;
     QMenu *_menu;
+
+    QDateTime _last_click_time;
 };
 
 #endif // READINGHISTORY_H

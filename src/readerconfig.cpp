@@ -42,10 +42,11 @@ void ReaderConfig::setCurrentBook(QString book_name)
     _setValue("History", time, book_name);
 }
 
-void ReaderConfig::addBookmark(QString book_name, int page)
+void ReaderConfig::addBookmark(QString book_name, int page, QString page_title)
 {
-    auto key = QString("%1_%2")
+    auto key = QString("%1_%2_%3")
             .arg(book_name)
+            .arg(page_title)
             .arg(page);
 
     _setValue("Bookmark", key, QDateTime::currentDateTime().toString("yyyyMMddHHmmss"));

@@ -28,6 +28,9 @@ BookBrowser::~BookBrowser()
 
 QString BookBrowser::pageContent(int page)
 {
+    if(_file == nullptr)
+        return QString();
+
     if(!_file->exists())
     {
         qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
@@ -52,11 +55,21 @@ QString BookBrowser::pageContent(int page)
     _file->seek(pagebegin);
     auto content = _file->read(len);
 
-    return _codec->toUnicode(content);
+    auto txt = _codec->toUnicode(content);
+    // 处理首页为空的情况
+    if(txt.trimmed().isEmpty())
+    {
+        txt = pageContent(page + 1);
+    }
+
+    return txt;
 }
 
 QString BookBrowser::pageContent(QString page_name)
 {
+    if(_file == nullptr)
+        return QString();
+
     if(!_page_poses.contains(page_name))
         return QString();
 
@@ -72,11 +85,22 @@ QString BookBrowser::pageContent(QString page_name)
     _file->seek(pagebegin);
     auto content = _file->read(len);
 
-    return _codec->toUnicode(content);
+    auto txt = _codec->toUnicode(content);
+    // 处理首页为空的情况
+    if(txt.trimmed().isEmpty())
+    {
+        auto index = _page_titles.indexOf(page_name);
+        txt = pageContent(index + 1);
+    }
+
+    return txt;
 }
 
 QString BookBrowser::pagePreview(int page, int num)
 {
+    if(_file == nullptr)
+        return QString();
+
     if(page < 0 || page > _page_titles.size() - 1)
         return QString();
 
@@ -96,6 +120,9 @@ QString BookBrowser::pagePreview(int page, int num)
 
 QString BookBrowser::pagePreview(QString page_name, int num)
 {
+    if(_file == nullptr)
+        return QString();
+
     if(!_page_poses.contains(page_name))
         return QString();
 
@@ -115,6 +142,9 @@ QString BookBrowser::pagePreview(QString page_name, int num)
 
 bool BookBrowser::moveNext()
 {
+    if(_file == nullptr)
+        return false;
+
     if(_current_page == _page_titles.size() - 1)
         return false;
 
@@ -126,6 +156,9 @@ bool BookBrowser::moveNext()
 
 bool BookBrowser::movePrevious()
 {
+    if(_file == nullptr)
+        return false;
+
     if(_current_page == 0)
         return false;
 
@@ -137,10 +170,13 @@ bool BookBrowser::movePrevious()
 
 bool BookBrowser::moveToPage(int page)
 {
+    if(_file == nullptr)
+        return false;
+
     if(page < 0 || page > _page_titles.size() - 1)
         return false;
 
-    _current_page = page;    
+    _current_page = page;
     ReaderConfig::Instance()->setBookCurrentPage(_book_name, _current_page);
 
     return true;
@@ -148,6 +184,9 @@ bool BookBrowser::moveToPage(int page)
 
 bool BookBrowser::moveToRatio(float ratio)
 {
+    if(_file == nullptr)
+        return false;
+
     if(ratio < 0 || ratio > 1 || _page_titles.isEmpty())
         return false;
 
@@ -160,8 +199,10 @@ bool BookBrowser::moveToRatio(float ratio)
 
 void BookBrowser::_bookPaging(QString file_path)
 {
-    if(!file_path.isEmpty())
-        _file = new QFile(file_path);
+    if(file_path.isEmpty())
+        return;
+
+    _file = new QFile(file_path);
 
     if(!_file->exists())
     {
@@ -178,7 +219,7 @@ void BookBrowser::_bookPaging(QString file_path)
 
     auto first_page_name = QObject::tr("First Page");
     _page_titles.push_back(first_page_name);
-    _page_poses[first_page_name] = _file->pos();
+    _page_poses[first_page_name] = 0;
 
     do
     {

@@ -55,11 +55,15 @@
     </message>
     <message>
         <source>Page Number</source>
-        <translation>页码</translation>
+        <translation type="vanished">页码</translation>
     </message>
     <message>
         <source>Record Time</source>
         <translation>时间</translation>
+    </message>
+    <message>
+        <source>Page Title</source>
+        <translation>章节标题</translation>
     </message>
 </context>
 <context>
@@ -246,7 +250,7 @@
     </message>
     <message>
         <source>Remove</source>
-        <translation>删除</translation>
+        <translation>移除</translation>
     </message>
     <message>
         <source>Select Files</source>
@@ -258,11 +262,11 @@
     </message>
     <message>
         <source>Remove Confirm</source>
-        <translation>删除确认</translation>
+        <translation>移除确认</translation>
     </message>
     <message>
         <source>You are going to remove this item, continue?</source>
-        <translation>即将删除此项，是否继续？</translation>
+        <translation>即将移除此项，是否继续？</translation>
     </message>
     <message>
         <source>Clear</source>
@@ -320,6 +324,10 @@
     <message>
         <source>Text Color</source>
         <translation>文字颜色</translation>
+    </message>
+    <message>
+        <source>https://www.listera.top/tag/novelreader/</source>
+        <translation>https://www.listera.top/ting-yu-xiao-shuo-yue-du-qi-shi-yong-shuo-ming/</translation>
     </message>
 </context>
 <context>

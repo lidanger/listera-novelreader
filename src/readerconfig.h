@@ -68,7 +68,7 @@ public:
     inline QString readingHistoryItem(QString item_name) { return _getValue("History", item_name).toString(); }
     inline void clearHistory() { _removeKey("History", ""); }
 
-    void addBookmark(QString book_name, int page);
+    void addBookmark(QString book_name, int page, QString page_title);
     inline QStringList bookmarks() { return _getKeys("Bookmark"); }
     inline QString bookmarkTime(QString key) { return _getValue("Bookmark", key).toString(); }
     inline void removeBookmark(QString key) { _removeKey("Bookmark", key); }

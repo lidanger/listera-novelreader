@@ -31,7 +31,7 @@ private slots:
     void dSettings_valueChanged(const QString &key, const QVariant &value);
 
     void library_clicked();
-    void add_bookmark_clicked();
+    void add_bookmark();
 
     void import_file();
     void import_directory();
@@ -39,7 +39,7 @@ private slots:
 
     void history_aboutToShow();
     void show_bookmarks();
-    void view_contents_clicked();
+    void view_contents();
 
     void booklist_currentRowChanged(int currentRow);
 

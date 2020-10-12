@@ -104,14 +104,14 @@ void MainWindow::init_ui()
     titlebar->addWidget(button, Qt::AlignRight);
     button->setText(tr("View Contents"));
     button->setShortcut(Qt::Key_F6);
-    connect(button, SIGNAL(clicked()), this, SLOT(view_contents_clicked()));
+    connect(button, SIGNAL(clicked()), this, SLOT(view_contents()));
     button->setObjectName("viewcontents");
 
     button = new QToolButton(titlebar);
     titlebar->addWidget(button, Qt::AlignRight);
     button->setText(tr("Add BookMark"));
     button->setShortcut(Qt::Key_F3);
-    connect(button, SIGNAL(clicked()), this, SLOT(add_bookmark_clicked()));
+    connect(button, SIGNAL(clicked()), this, SLOT(add_bookmark()));
     button->setObjectName("addbookmark");
 
     button = new QToolButton(titlebar);
@@ -137,7 +137,7 @@ void MainWindow::init_ui()
 
     // 工具栏
     _toolbar->setWindowTitle(tr("ToolBar"));
-    _toolbar->setStyleSheet(QString("QToolBar{border:none;backgroud-color:rgb(0,55,0)}"));
+    _toolbar->setStyleSheet(QString("QToolBar{border:none;}"));
     _toolbar->setVisible(ReaderConfig::Instance()->toolbarState());
     _toolbar->installEventFilter(this);
 
@@ -475,8 +475,6 @@ void MainWindow::import_file()
 
     for(auto it = lst.begin(); it != lst.end(); it++)
     {
-        qDebug() << *it << endl;
-
         QFileInfo fi(*it);
 
         auto item = new QListWidgetItem(fi.baseName(), _booklist);
@@ -486,6 +484,9 @@ void MainWindow::import_file()
 
         ReaderConfig::Instance()->addBook(*it);
     }
+
+    if(_booklist->count() > 0)
+        _booklist->setCurrentRow(_booklist->count() - 1);
 }
 
 void MainWindow::import_directory()
@@ -501,8 +502,6 @@ void MainWindow::import_directory()
 
     for(auto it = lst.begin(); it != lst.end(); it++)
     {
-        qDebug() << *it << endl;
-
         auto item = new QListWidgetItem(it->baseName(), _booklist);
         item->setData(Qt::UserRole, it->absoluteFilePath());
         item->setSizeHint(QSize(100, 30));
@@ -510,6 +509,9 @@ void MainWindow::import_directory()
 
         ReaderConfig::Instance()->addBook(it->absoluteFilePath());
     }
+
+    if(_booklist->count() > 0)
+        _booklist->setCurrentRow(_booklist->count() - 1);
 }
 
 void MainWindow::remove_novel()
@@ -583,26 +585,41 @@ void MainWindow::history_aboutToShow()
 void MainWindow::show_bookmarks()
 {
     Bookmarks dlg(this);
-    dlg.exec();
+    if(dlg.exec() != QDialog::Accepted)
+        return;
+
+    if(ReaderConfig::Instance()->currentBook() == _browser->name())
+    {
+        _browser->moveToPage(ReaderConfig::Instance()->bookCurrentPage(_browser->name()));
+        _content->setText(_browser->currentPageContent());
+        _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
+    }
+    else
+    {
+        auto items = _booklist->findItems(ReaderConfig::Instance()->currentBook(), Qt::MatchExactly);
+        if(items.empty())
+            return;
+
+        _booklist->setCurrentItem(items.first());
+    }
 }
 
-void MainWindow::view_contents_clicked()
+void MainWindow::view_contents()
 {
     if(_booklist->currentRow() == -1)
         return;
 
     BookContents dlg(_browser, this);
-    auto ret = dlg.exec();
-    if(ret != QDialog::Accepted)
+    if(dlg.exec() != QDialog::Accepted)
         return;
 
     _content->setText(_browser->currentPageContent());
     _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
 }
 
-void MainWindow::add_bookmark_clicked()
+void MainWindow::add_bookmark()
 {
-    ReaderConfig::Instance()->addBookmark(_browser->name(), _browser->currentPage());
+    ReaderConfig::Instance()->addBookmark(_browser->name(), _browser->currentPage(), _browser->currentPageTitle());
 }
 
 void MainWindow::booklist_currentRowChanged(int currentRow)
@@ -884,12 +901,12 @@ void MainWindow::_find_text_returnPressed()
 
 void MainWindow::view_instructions()
 {
-    QDesktopServices::openUrl(QUrl("https://www.listera.top"));
+    QDesktopServices::openUrl(QUrl(tr("https://www.listera.top/tag/novelreader/")));
 }
 
 void MainWindow::send_feedback()
 {
-    QDesktopServices::openUrl(QUrl("https://www.listera.top"));
+    QDesktopServices::openUrl(QUrl("https://www.listera.top/tag/novelreader/"));
 }
 
 void MainWindow::history_item_triggered()

@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
 
 project(listera-novelreader 
-    VERSION 1.0.4.1
+    VERSION 1.1.6
     DESCRIPTION "A Chinese novel reader for txt files"
     HOMEPAGE_URL "https://gitee.com/lidanger/listera-novelreader"
     LANGUAGES "CXX")
@@ -92,7 +92,7 @@ set(CPACK_PACKAGE_HOMEPAGE_URL ${PROJECT_HOMEPAGE_URL})
 set(CPACK_PACKAGE_CONTACT "lidanger <lidanger@outlook.com>")
 
 #set(CPACK_RESOURCE_FILE_LICENSE, ${PROJECT_SOURCE_DIR}/LICENSE)
-#set(CPACK_RESOURCE_FILE_README, ${PROJECT_SOURCE_DIR}/README.md)
+set(CPACK_RESOURCE_FILE_README, ${PROJECT_SOURCE_DIR}/README.md)
 
 set(CPACK_PACKAGE_CHECKSUM "MD5")
 

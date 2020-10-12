@@ -4,6 +4,7 @@
 #include <QMenu>
 #include <QStandardItem>
 #include <QDebug>
+#include <QEvent>
 
 Bookmarks::Bookmarks(QWidget *parent)
     : DDialog (parent)
@@ -15,7 +16,7 @@ Bookmarks::Bookmarks(QWidget *parent)
 void Bookmarks::init_ui()
 {
     this->setWindowTitle(tr("Bookmark List"));
-    this->setFixedSize(500, 400);
+    this->setFixedSize(700, 450);
 
     _table = new QTableView(this);
     this->addContent(_table);
@@ -25,6 +26,7 @@ void Bookmarks::init_ui()
     _table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     _table->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(_table, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(table_customContextMenuRequested(const QPoint &)));
+    connect(_table, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(table_doubleClicked(const QModelIndex &)));
 
     _menu = new QMenu(_table);
     _menu->addAction(tr("Remove"), this, SLOT(remove_triggered()));
@@ -40,7 +42,7 @@ void Bookmarks::init_data()
     auto model = new QStandardItemModel();
     model->setColumnCount(3);
     model->setHorizontalHeaderItem(0, new QStandardItem(tr("Book Name")));
-    model->setHorizontalHeaderItem(1, new QStandardItem(tr("Page Number")));
+    model->setHorizontalHeaderItem(1, new QStandardItem(tr("Page Title")));
     model->setHorizontalHeaderItem(2, new QStandardItem(tr("Record Time")));
     _table->setModel(model);
 
@@ -50,22 +52,13 @@ void Bookmarks::init_data()
     {
         auto key = keys[i];
 
-        QString name;
-        QString page;
         auto items = key.split('_', QString::SkipEmptyParts);
-        if(items.length() == 2)
-        {
-            name = items[0];
-            page = items[1];
-        }
-        else
-        {
-            if(items.length() < 2)
-                continue;
+        if(items.length() != 3)
+            continue;
 
-            page = items.last();
-            name = key.left(key.length() - page.length() - 1);
-        }
+        auto name = items[0];
+        auto page_title = items[1];
+        auto page = items[2];
 
         auto time = ReaderConfig::Instance()->bookmarkTime(key);
         if(time.length() == 14)
@@ -78,14 +71,14 @@ void Bookmarks::init_data()
                     .arg(time.right(2));
 
         model->setItem(i, 0, new QStandardItem(name));
-        model->setItem(i, 1, new QStandardItem(page));
+        model->setItem(i, 1, new QStandardItem(page_title));
         model->setItem(i, 2, new QStandardItem(time));
 
         model->item(i)->setData(key);
     }
 
-    _table->setColumnWidth(0, 225);
-    _table->setColumnWidth(1, 90);
+    _table->setColumnWidth(0, 200);
+    _table->setColumnWidth(1, 315);
     _table->setColumnWidth(2, 145);
 }
 
@@ -137,4 +130,26 @@ void Bookmarks::table_customContextMenuRequested(const QPoint &pos)
     }
 
     _menu->exec(QCursor::pos());
+}
+
+void Bookmarks::table_doubleClicked(const QModelIndex &index)
+{
+    if(!index.isValid())
+        return;
+
+    auto model = static_cast<QStandardItemModel*>(_table->model());
+    auto key = model->item(index.row())->data().toString();
+
+    auto items = key.split('_', QString::SkipEmptyParts);
+    if(items.length() != 3)
+        return;
+
+    bool ok = false;
+    auto page = items[2].toInt(&ok);
+    if(!ok)
+        return;
+
+    ReaderConfig::Instance()->setCurrentBook(items[0]);
+    ReaderConfig::Instance()->setBookCurrentPage(items[0], page);
+    this->accept();
 }

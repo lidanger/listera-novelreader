@@ -177,6 +177,12 @@ void TextContent::refresh()
 
 void TextContent::setBackgroundColor(const QColor &c)
 {
+    if(!c.isValid())
+        return;
+
+    if(c.red() == 0 && c.green() == 0 && c.blue() == 0)
+        return;
+
     _background_color = c;
     refresh();
 }
@@ -189,6 +195,9 @@ void TextContent::setBackgroundImage(const QString &file_path)
 
 void TextContent::setLineSpacing(double spacing)
 {
+    if(_line_space < 1)
+        return;
+
     _line_space = spacing;
     refresh();
 }
