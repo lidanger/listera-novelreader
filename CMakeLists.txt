@@ -1,7 +1,16 @@
 cmake_minimum_required (VERSION 3.5)
 
+EXECUTE_PROCESS(COMMAND git describe --tags
+        TIMEOUT 5
+        OUTPUT_VARIABLE GIT_VERSION
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+string(REGEX REPLACE "[v\n\t\r]" "" GIT_VERSION ${GIT_VERSION})
+MESSAGE(STATUS "building from git tag ${GIT_VERSION}")
+add_definitions(-DBUILD_VERSION=\"${GIT_VERSION}\")
+
 project(listera-novelreader 
-    VERSION 1.1.8
+    VERSION ${GIT_VERSION}
     DESCRIPTION "A Chinese novel reader for txt files"
     HOMEPAGE_URL "https://gitee.com/lidanger/listera-novelreader"
     LANGUAGES "CXX")
