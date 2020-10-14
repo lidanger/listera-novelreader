@@ -8,6 +8,10 @@
 #include <QStandardPaths>
 #include <QTextCodec>
 
+#ifndef BUILD_VERSION
+#define BUILD_VERSION ""
+#endif
+
 Application::Application(int &argc, char **argv)
     :DApplication (argc, argv)
 {
@@ -16,7 +20,7 @@ Application::Application(int &argc, char **argv)
     // 相关信息
     this->setOrganizationName("listera");
     this->setApplicationName("listera-novelreader");
-    this->setApplicationVersion("1.1.8");
+    this->setApplicationVersion(BUILD_VERSION);
     this->setProductIcon(QIcon(":/images/logo.png"));
     this->setApplicationHomePage("https://www.listera.top/tag/novelreader/");
 
