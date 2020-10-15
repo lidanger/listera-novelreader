@@ -49,6 +49,9 @@ void TextContent::_customContextMenuRequested(const QPoint &pos)
 {
     Q_UNUSED(pos);
 
+    if(this->text().isNull())
+        return;
+
     if(this->textCursor().selection().isEmpty())
     {
         _menu->findChild<QAction*>("copy")->setVisible(false);

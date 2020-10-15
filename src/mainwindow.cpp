@@ -619,6 +619,9 @@ void MainWindow::view_contents()
 
 void MainWindow::add_bookmark()
 {
+    if(_booklist->currentRow() == -1)
+        return;
+
     ReaderConfig::Instance()->addBookmark(_browser->name(), _browser->currentPage(), _browser->currentPageTitle());
 }
 
@@ -818,6 +821,9 @@ void MainWindow::show_full_screen()
 
 void MainWindow::set_auto_scrolling()
 {
+    if(_content->text().isNull())
+        return;
+
     auto action = _toolbar->findChild<QAction*>("autoscroll");
 
     if(action->isChecked())

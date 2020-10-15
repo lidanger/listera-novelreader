@@ -26,6 +26,23 @@ BookBrowser::~BookBrowser()
     }
 }
 
+QString BookBrowser::pageTitle(int page)
+{
+     if(page < 0 || page >= _page_titles.count())
+         return QString();
+
+     return _page_titles[page];
+}
+
+int BookBrowser::pageIndex(QString page_title)
+{
+    auto index = _page_titles.indexOf(page_title);
+    if(index == -1)
+        return 0;
+
+    return index;
+}
+
 QString BookBrowser::pageContent(int page)
 {
     if(_file == nullptr)

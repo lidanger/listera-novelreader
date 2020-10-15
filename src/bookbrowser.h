@@ -23,8 +23,8 @@ public:
     int pageNumber() { return _page_titles.size(); }
 
     QStringList pageTitles() { return _page_titles; }
-    QString pageTitle(int page) { return _page_titles[page]; }
-    int pageIndex(QString page_title) { return _page_titles.indexOf(page_title); }
+    QString pageTitle(int page);
+    int pageIndex(QString page_title);
 
     // 页面内容
     QString pageContent(int page);

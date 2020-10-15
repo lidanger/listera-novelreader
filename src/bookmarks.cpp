@@ -100,7 +100,7 @@ void Bookmarks::clear_triggered()
 
 void Bookmarks::table_customContextMenuRequested(const QPoint &pos)
 {
-    if(_table->model()->rowCount() == 0)
+    if(_table->model() == nullptr || _table->model()->rowCount() == 0)
         return;
 
     auto row = _table->rowAt(pos.y());

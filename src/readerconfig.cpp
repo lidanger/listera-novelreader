@@ -44,6 +44,9 @@ void ReaderConfig::setCurrentBook(QString book_name)
 
 void ReaderConfig::addBookmark(QString book_name, int page, QString page_title)
 {
+    if(book_name.isEmpty())
+        return;
+
     auto key = QString("%1_%2_%3")
             .arg(book_name)
             .arg(page_title)
