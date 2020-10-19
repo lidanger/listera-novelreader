@@ -20,7 +20,7 @@ ReaderConfig::ReaderConfig()
     _app_name = app->applicationName();
 }
 
-void ReaderConfig::addBook(QString book_path)
+void ReaderConfig::addBook(const QString &book_path)
 {
     QFileInfo fi(book_path);
     if (!fi.exists())
@@ -34,7 +34,7 @@ void ReaderConfig::addBook(QString book_path)
     _setValue("Library", book_name, book_path);
 }
 
-void ReaderConfig::setCurrentBook(QString book_name)
+void ReaderConfig::setCurrentBook(const QString &book_name)
 {
     _setValue("Reading", "CurrentBook", book_name);
 
@@ -42,7 +42,7 @@ void ReaderConfig::setCurrentBook(QString book_name)
     _setValue("History", time, book_name);
 }
 
-void ReaderConfig::addBookmark(QString book_name, int page, QString page_title)
+void ReaderConfig::addBookmark(const QString &book_name, int page, const QString &page_title)
 {
     if(book_name.isEmpty())
         return;
@@ -55,7 +55,7 @@ void ReaderConfig::addBookmark(QString book_name, int page, QString page_title)
     _setValue("Bookmark", key, QDateTime::currentDateTime().toString("yyyyMMddHHmmss"));
 }
 
-void ReaderConfig::setWindowSize(QSize size)
+void ReaderConfig::setWindowSize(const QSize &size)
 {
     _setValue("Window", "Width", size.width());
     _setValue("Window", "Height", size.height());
@@ -68,7 +68,7 @@ QSize ReaderConfig::windowSize()
     return QSize(width, height);
 }
 
-void ReaderConfig::setTextColor(QColor color)
+void ReaderConfig::setTextColor(const QColor &color)
 {
     _setValue("Reading", "TextColorR", color.red());
     _setValue("Reading", "TextColorG", color.green());
@@ -86,7 +86,7 @@ QColor ReaderConfig::textColor()
     return color;
 }
 
-void ReaderConfig::setBackgroundColor(QColor color)
+void ReaderConfig::setBackgroundColor(const QColor &color)
 {
     _setValue("Reading", "BackgroundColorR", color.red());
     _setValue("Reading", "BackgroundColorG", color.green());
@@ -104,7 +104,7 @@ QColor ReaderConfig::backgroundColor()
     return color;
 }
 
-void ReaderConfig::setBackgroundPicture(QString file_path)
+void ReaderConfig::setBackgroundPicture(const QString &file_path)
 {
     if (!QFile::exists(file_path))
     {

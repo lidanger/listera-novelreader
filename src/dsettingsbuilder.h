@@ -13,9 +13,9 @@ public:
     ~DSettingsBuilder();
 
 public:
-    void addTopGroup(QString key, QString showName);
-    bool addGroup(QString topGroupKey, QString key, QString showName, bool hide = false);
-    bool addOption(QString topGroupKey, QString groupKey, QString key, QString showName, QVariant defaultValue, QString showType = QString(), QVariant max = QVariant(), QVariant min = QVariant(), QString text = QString(), bool hide = false, bool reset = false);
+    void addTopGroup(const QString &key, const QString &showName);
+    bool addGroup(const QString &topGroupKey, const QString &key, const QString &showName, bool hide = false);
+    bool addOption(const QString &topGroupKey, const QString &groupKey, const QString &key, const QString &showName, const QVariant &defaultValue, const QString &showType = QString(), const QVariant &max = QVariant(), const QVariant &min = QVariant(), const QString &text = QString(), bool hide = false, bool reset = false);
 
     QByteArray toJson(QJsonDocument::JsonFormat format = QJsonDocument::Compact);
 

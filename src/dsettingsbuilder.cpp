@@ -34,7 +34,7 @@ DSettingsBuilder::~DSettingsBuilder()
     }
 }
 
-void DSettingsBuilder::addTopGroup(QString key, QString showName)
+void DSettingsBuilder::addTopGroup(const QString &key, const QString &showName)
 {
     auto group = new DSettginsTopGroup;
     group->key = key;
@@ -43,7 +43,7 @@ void DSettingsBuilder::addTopGroup(QString key, QString showName)
     _map[key] = group;
 }
 
-bool DSettingsBuilder::addGroup(QString topGroupKey, QString key, QString showName, bool hide)
+bool DSettingsBuilder::addGroup(const QString &topGroupKey, const QString &key, const QString &showName, bool hide)
 {
     if(!_map.contains(topGroupKey))
         return false;
@@ -57,7 +57,7 @@ bool DSettingsBuilder::addGroup(QString topGroupKey, QString key, QString showNa
     return true;
 }
 
-bool DSettingsBuilder::addOption(QString topGroupKey, QString groupKey, QString key, QString showName, QVariant defaultValue, QString showType, QVariant max, QVariant min, QString text, bool hide, bool reset)
+bool DSettingsBuilder::addOption(const QString &topGroupKey, const QString &groupKey, const QString &key, const QString &showName, const QVariant &defaultValue, const QString &showType, const QVariant &max, const QVariant &min, const QString &text, bool hide, bool reset)
 {
     if(!_map.contains(topGroupKey))
         return false;

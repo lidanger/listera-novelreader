@@ -9,7 +9,7 @@
 class BookBrowser
 {
 public:
-    BookBrowser(QString book_name = QString());
+    BookBrowser(const QString &book_name = QString());
     ~BookBrowser();
 
 public:
@@ -24,14 +24,14 @@ public:
 
     QStringList pageTitles() { return _page_titles; }
     QString pageTitle(int page);
-    int pageIndex(QString page_title);
+    int pageIndex(const QString &page_title);
 
     // 页面内容
     QString pageContent(int page);
-    QString pageContent(QString page_name);
+    QString pageContent(const QString &page_name);
 
     QString pagePreview(int page, int num = 800);
-    QString pagePreview(QString page_name, int num = 800);
+    QString pagePreview(const QString &page_name, int num = 800);
 
     // 当前页面
     // 从 0 开始
@@ -49,10 +49,10 @@ public:
 
 private:
     // 分页。最少 1 页
-    void _bookPaging(QString file_path);
+    void _bookPaging(const QString &file_path);
 
     qint64 _getPageLength(int page);
-    qint64 _getPageLength(QString page_title);
+    qint64 _getPageLength(const QString &page_title);
 
 private:
     QString _book_name;

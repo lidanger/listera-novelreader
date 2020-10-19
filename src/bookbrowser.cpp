@@ -2,7 +2,7 @@
 #include "readerconfig.h"
 #include "utils.h"
 
-BookBrowser::BookBrowser(QString book_name)
+BookBrowser::BookBrowser(const QString &book_name)
     :_book_name(book_name)
 {
     // 从设置中加载必要的信息
@@ -34,7 +34,7 @@ QString BookBrowser::pageTitle(int page)
      return _page_titles[page];
 }
 
-int BookBrowser::pageIndex(QString page_title)
+int BookBrowser::pageIndex(const QString &page_title)
 {
     auto index = _page_titles.indexOf(page_title);
     if(index == -1)
@@ -80,7 +80,7 @@ QString BookBrowser::pageContent(int page)
     return txt;
 }
 
-QString BookBrowser::pageContent(QString page_name)
+QString BookBrowser::pageContent(const QString &page_name)
 {
     if(_file == nullptr)
         return QString();
@@ -134,7 +134,7 @@ QString BookBrowser::pagePreview(int page, int num)
     return _codec->toUnicode(content);
 }
 
-QString BookBrowser::pagePreview(QString page_name, int num)
+QString BookBrowser::pagePreview(const QString &page_name, int num)
 {
     if(_file == nullptr)
         return QString();
@@ -214,7 +214,7 @@ bool BookBrowser::moveToRatio(float ratio)
     return true;
 }
 
-void BookBrowser::_bookPaging(QString file_path)
+void BookBrowser::_bookPaging(const QString &file_path)
 {
     if(file_path.isEmpty())
         return;
@@ -272,7 +272,7 @@ qint64 BookBrowser::_getPageLength(int page)
     return pageend - pagebegin;
 }
 
-qint64 BookBrowser::_getPageLength(QString page_title)
+qint64 BookBrowser::_getPageLength(const QString &page_title)
 {
     auto page = _page_titles.indexOf(page_title);
 

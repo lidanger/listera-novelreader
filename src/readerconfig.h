@@ -41,44 +41,44 @@ class ReaderConfig
     })
 
 public:
-    QVariant getValue(QString groupname, QString keyname, const QVariant &defaultValue = QVariant()) { return _getValue(groupname, keyname, defaultValue); }
-    QStringList getKeys(QString groupname) { return _getKeys(groupname); }
-    void setValue(QString groupname, QString keyname, QVariant value) { _setValue(groupname, keyname, value); }
-    void removeKey(QString groupname, QString keyname) { _removeKey(groupname, keyname); }
+    QVariant getValue(const QString &groupname, const QString &keyname, const QVariant &defaultValue = QVariant()) { return _getValue(groupname, keyname, defaultValue); }
+    QStringList getKeys(const QString &groupname) { return _getKeys(groupname); }
+    void setValue(const QString &groupname, const QString &keyname, const QVariant &value) { _setValue(groupname, keyname, value); }
+    void removeKey(const QString &groupname, const QString &keyname) { _removeKey(groupname, keyname); }
 
 public:
     static ReaderConfig *Instance() { return _inst == nullptr ? new ReaderConfig() : _inst; }
 
 public:
     // 书库
-    void addBook(QString book_path);
+    void addBook(const QString &book_path);
     inline QStringList bookNames() { return _getKeys("Library"); }
-    inline QString bookPath(QString book_name) { return _getValue("Library", book_name, "").toString(); }
-    inline void removeBook(QString book_name) { _removeKey("Library", book_name); }
+    inline QString bookPath(const QString &book_name) { return _getValue("Library", book_name, "").toString(); }
+    inline void removeBook(const QString &book_name) { _removeKey("Library", book_name); }
     inline void clearBooks() { _removeKey("Library", ""); }
 
     // 书籍阅读
-    void setCurrentBook(QString book_name);
+    void setCurrentBook(const QString &book_name);
     inline QString currentBook() { return _getValue("Reading", "CurrentBook", "").toString(); }
 
-    inline void setBookCurrentPage(QString book_name, int page) { _setValue("Reading", book_name, page); }
-    inline int bookCurrentPage(QString book_name) { return _getValue("Reading", book_name, 0).toInt(); }
+    inline void setBookCurrentPage(const QString &book_name, int page) { _setValue("Reading", book_name, page); }
+    inline int bookCurrentPage(const QString &book_name) { return _getValue("Reading", book_name, 0).toInt(); }
 
     inline QStringList readingHistory() { return _getKeys("History"); }
-    inline QString readingHistoryItem(QString item_name) { return _getValue("History", item_name, "").toString(); }
+    inline QString readingHistoryItem(const QString &item_name) { return _getValue("History", item_name, "").toString(); }
     inline void clearHistory() { _removeKey("History", ""); }
 
-    void addBookmark(QString book_name, int page, QString page_title);
+    void addBookmark(const QString &book_name, int page, const QString &page_title);
     inline QStringList bookmarks() { return _getKeys("Bookmark"); }
-    inline QString bookmarkTime(QString key) { return _getValue("Bookmark", key, "").toString(); }
-    inline void removeBookmark(QString key) { _removeKey("Bookmark", key); }
+    inline QString bookmarkTime(const QString &key) { return _getValue("Bookmark", key, "").toString(); }
+    inline void removeBookmark(const QString &key) { _removeKey("Bookmark", key); }
     inline void clearBookmarks() { _removeKey("Bookmark", ""); }
 
     // 窗口状态
     inline void setWindowState(int state) { _setValue("Window", "State", state); }
     inline int windowState() { return _getValue("Window", "State", 0).toInt(); }
 
-    void setWindowSize(QSize size);
+    void setWindowSize(const QSize &size);
     QSize windowSize();
 
     inline void setSidebarState(int state) { _setValue("Window", "SidebarState", state); }
@@ -94,13 +94,13 @@ public:
     inline int statusbarState() { return _getValue("Window", "StatusbarState", 1).toInt(); }
 
     // 阅读视图状态
-    inline void setFontFamily(QString font_name) { _setValue("Reading", "FontFamily", font_name); }
+    inline void setFontFamily(const QString &font_name) { _setValue("Reading", "FontFamily", font_name); }
     inline QString fontFamily() { return _getValue("Reading", "FontFamily", "").toString(); }
 
     inline void setFontSize(double font_size) { _setValue("Reading", "FontSize", font_size); }
     inline double fontSize() { return _getValue("Reading", "FontSize", 12).toDouble(); }
 
-    void setTextColor(QColor color);
+    void setTextColor(const QColor &color);
     QColor textColor();
 
     inline void setCharacterSpace(double space) { _setValue("Reading", "CharacterSpace", space); }
@@ -112,9 +112,9 @@ public:
     inline void setParagraphSpace(int space) { _setValue("Reading", "ParagraphSpace", space); }
     inline int paragraphSpace() { return _getValue("Reading", "ParagraphSpace", 2).toInt(); }
 
-    void setBackgroundColor(QColor color);
+    void setBackgroundColor(const QColor &color);
     QColor backgroundColor();
-    void setBackgroundPicture(QString file_path);
+    void setBackgroundPicture(const QString &file_path);
     QString backgroundPicture() { return _getValue("Reading", "BackgroundPicture", "").toString(); }
 
     inline void setDarkMode(bool state) { _setValue("Reading", "DarkMode", state); }
@@ -124,13 +124,13 @@ public:
     inline bool removeEmptyLine() { return _getValue("Reading", "RemoveEmptyLine", false).toBool(); }
 
     // 快捷键
-    inline void setShortcut(QString function_name, QString keys) { _setValue("Shotcuts", function_name, keys); }
-    inline QString shortcutKeys(QString function_name) { return _getValue("Shotcuts", function_name, "").toString(); }
+    inline void setShortcut(const QString &function_name, const QString &keys) { _setValue("Shotcuts", function_name, keys); }
+    inline QString shortcutKeys(const QString &function_name) { return _getValue("Shotcuts", function_name, "").toString(); }
 
-    inline void setSearchEngine(QString engine) { _setValue("Web", "SearchEngine", engine); }
+    inline void setSearchEngine(const QString &engine) { _setValue("Web", "SearchEngine", engine); }
     inline QString searchEngine() { return _getValue("Web", "SearchEngine", "Baidu").toString(); }
 
-    inline void setTranslateEngine(QString engine) { _setValue("Web", "TranslateEngine", engine); }
+    inline void setTranslateEngine(const QString &engine) { _setValue("Web", "TranslateEngine", engine); }
     inline QString translateEngine() { return _getValue("Web", "TranslateEngine", "Youdao").toString(); }
 
     // 从本地格式配置文件中得到符合 DSettings 的 JSON 字符串
