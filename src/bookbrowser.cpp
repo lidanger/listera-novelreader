@@ -58,15 +58,13 @@ QString BookBrowser::pageContent(int page)
     {
         auto content = _file->readAll();
         auto txt = _codec->toUnicode(content);
-
-        _file->close();
         return txt;
     }
 
     if(page < 0 || page > _page_titles.size() - 1)
         return QString();
 
-    auto pagebegin = _page_poses[_page_titles[page]];
+    auto pagebegin = _page_poses[page];
     auto len = _getPageLength(page);
 
     _file->seek(pagebegin);
@@ -87,7 +85,8 @@ QString BookBrowser::pageContent(QString page_name)
     if(_file == nullptr)
         return QString();
 
-    if(!_page_poses.contains(page_name))
+    auto index = _page_titles.indexOf(page_name);
+    if(index == -1)
         return QString();
 
     if(!_file->exists())
@@ -96,8 +95,8 @@ QString BookBrowser::pageContent(QString page_name)
         return QString();
     }
 
-    auto pagebegin = _page_poses[page_name];
-    auto len = _getPageLength(page_name);
+    auto pagebegin = _page_poses[index];
+    auto len = _getPageLength(index);
 
     _file->seek(pagebegin);
     auto content = _file->read(len);
@@ -127,7 +126,7 @@ QString BookBrowser::pagePreview(int page, int num)
         return QString();
     }
 
-    auto pagebegin = _page_poses[_page_titles[page]];
+    auto pagebegin = _page_poses[page];
 
     _file->seek(pagebegin);
     auto content = _file->read(num);
@@ -140,7 +139,8 @@ QString BookBrowser::pagePreview(QString page_name, int num)
     if(_file == nullptr)
         return QString();
 
-    if(!_page_poses.contains(page_name))
+    auto index = _page_titles.indexOf(page_name);
+    if(index != -1)
         return QString();
 
     if(!_file->exists())
@@ -149,7 +149,7 @@ QString BookBrowser::pagePreview(QString page_name, int num)
         return QString();
     }
 
-    auto pagebegin = _page_poses[page_name];
+    auto pagebegin = _page_poses[index];
 
     _file->seek(pagebegin);
     auto content = _file->read(num);
@@ -236,7 +236,7 @@ void BookBrowser::_bookPaging(QString file_path)
 
     auto first_page_name = QObject::tr("First Page");
     _page_titles.push_back(first_page_name);
-    _page_poses[first_page_name] = 0;
+    _page_poses.push_back(0);
 
     do
     {
@@ -247,7 +247,7 @@ void BookBrowser::_bookPaging(QString file_path)
         if(is_toc_item(txt))
         {
             _page_titles.push_back(txt);
-            _page_poses[txt] = pos;
+            _page_poses.push_back(pos);
         }
 
     } while(!_file->atEnd());
@@ -260,24 +260,24 @@ void BookBrowser::_bookPaging(QString file_path)
 
 qint64 BookBrowser::_getPageLength(int page)
 {
-    auto pagebegin = _page_poses[_page_titles[page]];
+    auto pagebegin = _page_poses[page];
 
     auto pageend = 9223372036854775807;
     if(page < _page_titles.size() - 1)
-        pageend = _page_poses[_page_titles[page + 1]];
+        pageend = _page_poses[page + 1];
 
     return pageend - pagebegin;
 }
 
 qint64 BookBrowser::_getPageLength(QString page_title)
 {
-    auto pagebegin = _page_poses[page_title];
-
     auto page = _page_titles.indexOf(page_title);
+
+    auto pagebegin = _page_poses[page];
 
     auto pageend = 9223372036854775807;
     if(page < _page_titles.size() - 1)
-        pageend = _page_poses[_page_titles[page + 1]];
+        pageend = _page_poses[page + 1];
 
     return pageend - pagebegin;
 }

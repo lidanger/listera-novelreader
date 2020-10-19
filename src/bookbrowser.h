@@ -59,8 +59,8 @@ private:
 
     QFile *_file;
     QTextCodec *_codec;
-    QMap<QString, qint64> _page_poses;
     QList<QString> _page_titles;
+    QList<qint64> _page_poses;
 
     int _current_page;
 };
