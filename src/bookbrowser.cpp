@@ -244,6 +244,9 @@ void BookBrowser::_bookPaging(QString file_path)
         auto line = _file->readLine();
         auto txt = _codec->toUnicode(line).trimmed();
 
+        if(txt.startsWith(_book_name))
+            txt = txt.right(txt.length() - _book_name.length()).trimmed();
+
         if(is_toc_item(txt))
         {
             _page_titles.push_back(txt);

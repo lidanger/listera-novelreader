@@ -106,7 +106,7 @@ static QChar _toc_begin = u'第';
 static QSet<QChar> _toc_filters({ u'章', u'卷', u'回', u'部', u'节', u'集', u'篇' });
 
 // 字符串是否小说目录项
-bool is_toc_item(QString line)
+bool is_toc_item(QString &line)
 {
     //line = line.trimmed();
 
@@ -145,7 +145,7 @@ static QMap<QString, QString> _web_search_engine_names(
             { "搜狗", "Sogou" },
 });
 
-void startWebSearch(QString text, QString engine)
+void startWebSearch(QString &text, QString engine)
 {
     if(text.isEmpty())
         return;
@@ -202,7 +202,7 @@ static QMap<QString, QString> _web_translate_engine_names(
             { "谷歌", "Google" }
 });
 
-void startWebTranslate(QString text, QString engine)
+void startWebTranslate(QString &text, QString engine)
 {
     if(text.isEmpty())
         return;

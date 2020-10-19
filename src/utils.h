@@ -20,15 +20,15 @@ QTextCodec* GetCorrectTextCodec(QString file_path, int check_length = 100);
 bool is_digit(QChar aa);
 
 // 字符串是否小说目录项
-bool is_toc_item(QString line);
+bool is_toc_item(QString &line);
 
 // 打开浏览器执行搜索
-void startWebSearch(QString text, QString engine = QString());
+void startWebSearch(QString &text, QString engine = QString());
 QStringList searchEngines();
 QString searchEngineChineseName(QString engine);
 QString serachEngineName(QString chineseName);
 
-void startWebTranslate(QString text, QString engine = QString());
+void startWebTranslate(QString &text, QString engine = QString());
 QStringList translateEngines();
 QString translateEngineChineseName(QString engine);
 QString translateEngineName(QString chineseName);

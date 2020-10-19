@@ -645,8 +645,7 @@ void MainWindow::booklist_currentRowChanged(int currentRow)
 
     if(!_browser->isAvailable())
     {
-        QMessageBox box(QMessageBox::Information, tr("File not found"), QString(tr("The following file was not found:\n%1")).arg(filepath), QMessageBox::Ok, this);
-        box.exec();
+        QMessageBox::information(this, tr("File not found"), QString(tr("The following file was not found:\n%1")).arg(filepath), QMessageBox::Ok);
         return;
     }
 
