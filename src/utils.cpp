@@ -110,7 +110,7 @@ bool is_toc_item(const QString &line)
 {
     //line = line.trimmed();
 
-    if(line.length() > 30)
+    if(line.length() > 50)
         return false;
 
     if(line[0] != _toc_begin)
