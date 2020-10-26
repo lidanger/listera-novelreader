@@ -29,6 +29,7 @@
 #include <DSettingsGroup>
 #include <DSettingsOption>
 #include <QSpinBox>
+#include <DToolButton>
 
 DCORE_USE_NAMESPACE
 

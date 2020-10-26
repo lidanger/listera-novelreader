@@ -120,6 +120,9 @@ bool is_toc_item(const QString &line)
     {
         auto aa = line[i];
 
+        if(aa.isSpace())
+            continue;
+
         if(_toc_filters.contains(aa))
             return true;
 

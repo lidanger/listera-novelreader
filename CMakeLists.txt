@@ -58,7 +58,7 @@ if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
 
 include_directories(
     /usr/include/libdtk-5.2.2/DCore
-    /usr/include/libdtk-5.2.1/DGui
+    /usr/include/libdtk-5.2.2/DGui
     /usr/include/libdtk-5.2.2/DWidget)
 
 endif()
