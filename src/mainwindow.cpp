@@ -591,7 +591,12 @@ void MainWindow::show_bookmarks()
 
     if(ReaderConfig::Instance()->currentBook() == _browser->name())
     {
-        _browser->moveToPage(ReaderConfig::Instance()->bookCurrentPage(_browser->name()));
+        if(!_browser->moveToPage(ReaderConfig::Instance()->bookCurrentPage(_browser->name())))
+        {
+            if(!_browser->isAvailable())
+                QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+            return;
+        }
         _content->setText(_browser->currentPageContent());
         _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
     }
@@ -663,7 +668,8 @@ void MainWindow::previous_page_pressed()
 
     if(!_browser->movePrevious())
     {
-        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+        if(!_browser->isAvailable())
+            QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
         return;
     }
 
@@ -678,7 +684,8 @@ void MainWindow::next_page_pressed()
 
     if(!_browser->moveNext())
     {
-        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+        if(!_browser->isAvailable())
+            QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
         return;
     }
 
@@ -714,7 +721,8 @@ void MainWindow::current_page_edit_returnPressed()
 
     if(!_browser->moveToPage(page_index - 1))
     {
-        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+        if(!_browser->isAvailable())
+            QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
 
         _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
         return;
@@ -977,7 +985,8 @@ void MainWindow::jumptoratio_returnPressed()
     {
         if(!_browser->moveToRatio(ratio / 100))
         {
-            QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+            if(!_browser->isAvailable())
+                QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
             return;
         }
 
