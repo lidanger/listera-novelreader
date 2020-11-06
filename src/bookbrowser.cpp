@@ -45,7 +45,7 @@ int BookBrowser::pageIndex(const QString &page_title)
 
 QString BookBrowser::pageContent(int page)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return QString();
 
     if(!_file->exists())
@@ -82,7 +82,7 @@ QString BookBrowser::pageContent(int page)
 
 QString BookBrowser::pageContent(const QString &page_name)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return QString();
 
     auto index = _page_titles.indexOf(page_name);
@@ -114,7 +114,7 @@ QString BookBrowser::pageContent(const QString &page_name)
 
 QString BookBrowser::pagePreview(int page, int num)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return QString();
 
     if(page < 0 || page > _page_titles.size() - 1)
@@ -136,7 +136,7 @@ QString BookBrowser::pagePreview(int page, int num)
 
 QString BookBrowser::pagePreview(const QString &page_name, int num)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return QString();
 
     auto index = _page_titles.indexOf(page_name);
@@ -159,7 +159,7 @@ QString BookBrowser::pagePreview(const QString &page_name, int num)
 
 bool BookBrowser::moveNext()
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return false;
 
     if(_current_page == _page_titles.size() - 1)
@@ -173,7 +173,7 @@ bool BookBrowser::moveNext()
 
 bool BookBrowser::movePrevious()
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return false;
 
     if(_current_page == 0)
@@ -187,7 +187,7 @@ bool BookBrowser::movePrevious()
 
 bool BookBrowser::moveToPage(int page)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return false;
 
     if(page < 0 || page > _page_titles.size() - 1)
@@ -201,7 +201,7 @@ bool BookBrowser::moveToPage(int page)
 
 bool BookBrowser::moveToRatio(float ratio)
 {
-    if(_file == nullptr)
+    if(_file == nullptr || !_file->exists())
         return false;
 
     if(ratio < 0 || ratio > 1 || _page_titles.isEmpty())

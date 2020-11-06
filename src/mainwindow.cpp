@@ -646,7 +646,7 @@ void MainWindow::booklist_currentRowChanged(int currentRow)
 
     if(!_browser->isAvailable())
     {
-        QMessageBox::information(this, tr("File not found"), QString(tr("The following file was not found:\n%1")).arg(filepath), QMessageBox::Ok);
+        QMessageBox::information(this, tr("File not found"), QString(tr("The following file can not be found:\n%1")).arg(filepath), QMessageBox::Ok);
         return;
     }
 
@@ -662,7 +662,10 @@ void MainWindow::previous_page_pressed()
         return;
 
     if(!_browser->movePrevious())
+    {
+        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
         return;
+    }
 
     _content->setText(_browser->currentPageContent());
     _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
@@ -674,7 +677,10 @@ void MainWindow::next_page_pressed()
         return;
 
     if(!_browser->moveNext())
+    {
+        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
         return;
+    }
 
     _content->setText(_browser->currentPageContent());
     _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
@@ -708,6 +714,8 @@ void MainWindow::current_page_edit_returnPressed()
 
     if(!_browser->moveToPage(page_index - 1))
     {
+        QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+
         _current_page_edit->setText(QString("%1").arg(_browser->currentPage() + 1));
         return;
     }
@@ -967,7 +975,11 @@ void MainWindow::jumptoratio_returnPressed()
     auto ratio = txt.toFloat(&ok);
     if(ok)
     {
-        _browser->moveToRatio(ratio / 100);
+        if(!_browser->moveToRatio(ratio / 100))
+        {
+            QMessageBox::information(this, tr("File not found"), tr("The novel file can not be found."), QMessageBox::Ok);
+            return;
+        }
 
         _content->setText(_browser->currentPageContent());
         _current_page_edit->setText(QString("%1").arg(_browser->currentPage()));

@@ -7,13 +7,10 @@
 #include <QFile>
 #include <QSet>
 
-// 编码转换
-QString GetCorrectUnicode(const QByteArray &ba);
-
-QString GetCorrectText(const QByteArray &ba);
-
+// 获取字符编码
 QTextCodec* GetCorrectTextCodec(const QByteArray &ba);
 
+// 获取字符编码
 QTextCodec* GetCorrectTextCodec(const QString &file_path, int check_length = 100);
 
 // 字符是否十进制数字

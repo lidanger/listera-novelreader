@@ -17,7 +17,7 @@ public:
     QString name() { return _book_name; }
 
     // 是否可用，主要用于判断分页过程是否正常完成
-    bool isAvailable() { return _codec != nullptr; }
+    bool isAvailable() { return _codec != nullptr && _file->exists(); }
 
     // 总页数
     int pageNumber() { return _page_titles.size(); }

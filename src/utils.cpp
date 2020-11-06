@@ -5,55 +5,25 @@
 #include <QSet>
 #include <QDesktopServices>
 #include <QUrl>
-
-// 编码转换
-QString GetCorrectUnicode(const QByteArray &ba)
-{
-    QTextCodec::ConverterState state;
-    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-    QString text = codec->toUnicode(ba.constData(), ba.size(), &state);
-
-    qDebug() << state.invalidChars << endl;
-
-    // GBK
-    if (state.invalidChars == 4)
-    {
-        text = QTextCodec::codecForName("GBK")->toUnicode(ba);
-    }
-    else if(state.invalidChars == 3)    // unicode
-    {
-        text = QTextCodec::codecForName("Unicode")->toUnicode(ba);
-    }
-
-    return text;
-}
-
-QString GetCorrectText(const QByteArray &ba)
-{
-    QTextCodec::ConverterState state;
-    QTextCodec *codec = QTextCodec::codecForName("UTF-8");
-    QString text = codec->toUnicode(ba.constData(), ba.size(), &state);
-
-    if (state.invalidChars > 0)
-    {
-        text = QTextCodec::codecForName("GBK")->toUnicode(ba);
-    }
-
-    return text;
-}
+#include <QException>
 
 QTextCodec* GetCorrectTextCodec(const QByteArray &ba)
 {
+    if (ba.isEmpty())
+        return QTextCodec::codecForLocale();
+
+    auto codec = QTextCodec::codecForUtfText(ba, nullptr);
+    if(codec != nullptr)
+        return codec;
+
     QTextCodec::ConverterState state;
-    auto *codec = QTextCodec::codecForName("UTF-8");
-    QString text = codec->toUnicode(ba.constData(), ba.size(), &state);
+    codec = QTextCodec::codecForName("UTF-8");
+    codec->toUnicode(ba.constData(), ba.size(), &state);
 
-    if (state.invalidChars > 0)
-    {
-        return QTextCodec::codecForName("GBK");
-    }
+    if (state.invalidChars == 0)
+        return codec;
 
-    return codec;
+    return QTextCodec::codecForName("GBK");
 }
 
 QTextCodec* GetCorrectTextCodec(const QString &file_path, int check_length)
@@ -61,28 +31,26 @@ QTextCodec* GetCorrectTextCodec(const QString &file_path, int check_length)
     QFile file(file_path);
     if(!file.exists())
     {
-        qDebug() <<  QString("以下文件未找到:\n%1").arg(file_path) << endl;
+        qDebug() <<  QObject::tr("The following file can not be found:\n%1").arg(file_path) << endl;
         return nullptr;
     }
 
-    if(!file.open(QIODevice::ReadOnly))
+    QByteArray content;
+    try
     {
-        return nullptr;
+        if(!file.open(QIODevice::ReadOnly))
+            return nullptr;
+
+        content = file.read(check_length);
+    }
+    catch(QException &ex)
+    {
+        Q_UNUSED(ex)
     }
 
-    auto content = file.read(check_length);
     file.close();
 
-    QTextCodec::ConverterState state;
-    auto *codec = QTextCodec::codecForName("UTF-8");
-    auto text = codec->toUnicode(content.constData(), content.size(), &state);
-
-    if (state.invalidChars > 0)
-    {
-        return QTextCodec::codecForName("GBK");
-    }
-
-    return codec;
+    return GetCorrectTextCodec(content);
 }
 
 static QSet<QChar> _zh_nums({ u'零',

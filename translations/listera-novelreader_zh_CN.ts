@@ -279,7 +279,7 @@
     <message>
         <source>The following file was not found:
 %1</source>
-        <translation>以下文件未找到：%1</translation>
+        <translation type="vanished">以下文件未找到：%1</translation>
     </message>
     <message>
         <source>Confirm</source>
@@ -329,6 +329,19 @@
         <source>https://www.listera.top/tag/novelreader/</source>
         <translation>https://www.listera.top/ting-yu-xiao-shuo-yue-du-qi-shi-yong-shuo-ming/</translation>
     </message>
+    <message>
+        <source>The novel file is not found.</source>
+        <translation type="vanished">小说文件找不到。</translation>
+    </message>
+    <message>
+        <source>The following file can not be found:
+%1</source>
+        <translation>找不到以下文件：</translation>
+    </message>
+    <message>
+        <source>The novel file can not be found.</source>
+        <translation>找不到小说文件：</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>
@@ -347,6 +360,11 @@
     <message>
         <source> not exists</source>
         <translation>不存在</translation>
+    </message>
+    <message>
+        <source>The following file can not be found:
+%1</source>
+        <translation>找不到以下文件：</translation>
     </message>
 </context>
 <context>
