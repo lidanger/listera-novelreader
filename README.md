@@ -10,7 +10,7 @@
 
 1. 准备
 
-   编译需要 qt5widgets qt5core qt5gui dtkcore dtkgui dtkwidget 等库的开发版本。
+   编译此程序需要 qt5widgets qt5core qt5gui dtkcore dtkgui dtkwidget 等库的开发版本。
    
 2. 编译
 

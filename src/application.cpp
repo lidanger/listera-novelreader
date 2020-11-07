@@ -102,5 +102,5 @@ void Application::_messageOutput(QtMsgType type, const QMessageLogContext &conte
 
 void Application::_aboutToQuit()
 {
-
+    this->closeAllWindows();
 }
