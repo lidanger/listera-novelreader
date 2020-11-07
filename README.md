@@ -8,14 +8,18 @@
 
 #### 安装教程
 
-1. 编译
+1. 准备
+
+   编译需要 qt5widgets qt5core qt5gui dtkcore dtkgui dtkwidget 等库的开发版本。
+   
+2. 编译
 
    ```bash
    cd src
    qmake
    make
    ```
-   
+
    或
 
    ```bash
@@ -25,8 +29,10 @@
    make
    make package
    ```
-   
-2. 安装
+
+   部分已编译版本见[这里](https://gitee.com/lidanger/listera-novelreader/releases)
+
+3. 安装
 
    ```bash
    sudo make install
@@ -41,7 +47,7 @@
 
 #### 使用说明
 
-1.  通过文件菜单添加书籍，通过左侧书库选择书籍；
+1.  通过左侧书库添加、选择书籍；
 2.  双击目录对话框中的条目可以跳转到对应的章节；
 3.  默认快捷键：上一页 ←   下一页 →    翻屏 空格。
 
