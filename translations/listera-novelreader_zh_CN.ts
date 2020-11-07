@@ -342,6 +342,26 @@
         <source>The novel file can not be found.</source>
         <translation>找不到小说文件：</translation>
     </message>
+    <message>
+        <source>Paging error</source>
+        <translation type="vanished">分页错误</translation>
+    </message>
+    <message>
+        <source>The following file can not be found, or text containing in it can not be recognized correctly:
+%1</source>
+        <translation type="vanished">找不到下列文件，或者文件中的文本无法正确识别：
+%1</translation>
+    </message>
+    <message>
+        <source>Text containing in the following file can not be recognized correctly:
+%1</source>
+        <translation>下列文件中的文本无法正确识别：
+%1</translation>
+    </message>
+    <message>
+        <source>Unsupported text encoding</source>
+        <translation>不支持的文本编码</translation>
+    </message>
 </context>
 <context>
     <name>QObject</name>

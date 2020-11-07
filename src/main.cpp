@@ -8,8 +8,6 @@ DWIDGET_USE_NAMESPACE
 
 int main(int argc, char *argv[])
 {
-    DApplication::loadDXcbPlugin();
-
     Application a(argc, argv);
 
     DApplicationSettings savetheme;

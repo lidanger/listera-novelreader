@@ -13,8 +13,24 @@ BookBrowser::BookBrowser(const QString &book_name)
 
     _current_page = ReaderConfig::Instance()->bookCurrentPage(_book_name);
 
+    // 检查文件
+    if(file_path.isEmpty())
+        return;
+
+    _file = new QFile(file_path);
+    if(!_file->exists())
+    {
+        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
+        return;
+    }
+
+    _codec = GetCorrectTextCodec(_file->fileName());
+
     // 获取分页信息
-    _bookPaging(file_path);
+    _bookPaging();
+
+    // 以只读模式打开
+    _file->open(QIODevice::ReadOnly);
 }
 
 BookBrowser::~BookBrowser()
@@ -36,17 +52,19 @@ QString BookBrowser::pageTitle(int page)
 
 int BookBrowser::pageIndex(const QString &page_title)
 {
-    auto index = _page_titles.indexOf(page_title);
-    if(index == -1)
-        return 0;
+    if(page_title.isEmpty())
+        return -1;
 
-    return index;
+    return _page_titles.indexOf(page_title);
 }
 
 QString BookBrowser::pageContent(int page)
 {
-    if(_file == nullptr || !_file->exists())
+    if(page < 0 || page > _page_titles.size() - 1)
         return QString();
+
+    qint64 pagebegin = 0;
+    auto len = _getPagePos(page, &pagebegin);
 
     if(!_file->exists())
     {
@@ -54,23 +72,11 @@ QString BookBrowser::pageContent(int page)
         return QString();
     }
 
-    if(_page_titles.isEmpty())
-    {
-        auto content = _file->readAll();
-        auto txt = _codec->toUnicode(content);
-        return txt;
-    }
-
-    if(page < 0 || page > _page_titles.size() - 1)
-        return QString();
-
-    auto pagebegin = _page_poses[page];
-    auto len = _getPageLength(page);
-
     _file->seek(pagebegin);
     auto content = _file->read(len);
 
     auto txt = _codec->toUnicode(content);
+
     // 处理首页为空的情况
     if(txt.trimmed().isEmpty())
     {
@@ -82,12 +88,15 @@ QString BookBrowser::pageContent(int page)
 
 QString BookBrowser::pageContent(const QString &page_name)
 {
-    if(_file == nullptr || !_file->exists())
+    if(page_name.isEmpty())
         return QString();
 
     auto index = _page_titles.indexOf(page_name);
     if(index == -1)
         return QString();
+
+    qint64 pagebegin = 0;
+    auto len = _getPagePos(page_name, &pagebegin);
 
     if(!_file->exists())
     {
@@ -95,13 +104,11 @@ QString BookBrowser::pageContent(const QString &page_name)
         return QString();
     }
 
-    auto pagebegin = _page_poses[index];
-    auto len = _getPageLength(index);
-
     _file->seek(pagebegin);
     auto content = _file->read(len);
 
     auto txt = _codec->toUnicode(content);
+
     // 处理首页为空的情况
     if(txt.trimmed().isEmpty())
     {
@@ -114,19 +121,16 @@ QString BookBrowser::pageContent(const QString &page_name)
 
 QString BookBrowser::pagePreview(int page, int num)
 {
-    if(_file == nullptr || !_file->exists())
-        return QString();
-
     if(page < 0 || page > _page_titles.size() - 1)
         return QString();
+
+    auto pagebegin = _page_poses[page];
 
     if(!_file->exists())
     {
         qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
-
-    auto pagebegin = _page_poses[page];
 
     _file->seek(pagebegin);
     auto content = _file->read(num);
@@ -136,20 +140,20 @@ QString BookBrowser::pagePreview(int page, int num)
 
 QString BookBrowser::pagePreview(const QString &page_name, int num)
 {
-    if(_file == nullptr || !_file->exists())
+    if(page_name.isEmpty())
         return QString();
 
     auto index = _page_titles.indexOf(page_name);
     if(index != -1)
         return QString();
 
+    auto pagebegin = _page_poses[index];
+
     if(!_file->exists())
     {
         qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
         return QString();
     }
-
-    auto pagebegin = _page_poses[index];
 
     _file->seek(pagebegin);
     auto content = _file->read(num);
@@ -159,7 +163,7 @@ QString BookBrowser::pagePreview(const QString &page_name, int num)
 
 bool BookBrowser::moveNext()
 {
-    if(_file == nullptr || !_file->exists())
+    if(_page_titles.isEmpty() || !_file->exists())
         return false;
 
     if(_current_page == _page_titles.size() - 1)
@@ -173,7 +177,7 @@ bool BookBrowser::moveNext()
 
 bool BookBrowser::movePrevious()
 {
-    if(_file == nullptr || !_file->exists())
+    if(_page_titles.isEmpty() || !_file->exists())
         return false;
 
     if(_current_page == 0)
@@ -187,7 +191,7 @@ bool BookBrowser::movePrevious()
 
 bool BookBrowser::moveToPage(int page)
 {
-    if(_file == nullptr || !_file->exists())
+    if(_page_titles.isEmpty() || !_file->exists())
         return false;
 
     if(page < 0 || page > _page_titles.size() - 1)
@@ -201,10 +205,10 @@ bool BookBrowser::moveToPage(int page)
 
 bool BookBrowser::moveToRatio(float ratio)
 {
-    if(_file == nullptr || !_file->exists())
+    if(_page_titles.isEmpty() || !_file->exists())
         return false;
 
-    if(ratio < 0 || ratio > 1 || _page_titles.isEmpty())
+    if(ratio < 0 || ratio > 1)
         return false;
 
     auto page = (_page_titles.size() - 1) * ratio;
@@ -214,20 +218,8 @@ bool BookBrowser::moveToRatio(float ratio)
     return true;
 }
 
-void BookBrowser::_bookPaging(const QString &file_path)
+void BookBrowser::_bookPaging()
 {
-    if(file_path.isEmpty())
-        return;
-
-    _file = new QFile(file_path);
-
-    if(!_file->exists())
-    {
-        qDebug() << QObject::tr("Can not find book ") << _book_name << QObject::tr("'s corresponding file:") << _file->fileName() << endl;
-        return;
-    }
-
-    _codec = GetCorrectTextCodec(_file->fileName());
     if(_codec == nullptr)
         return;
 
@@ -256,31 +248,28 @@ void BookBrowser::_bookPaging(const QString &file_path)
     } while(!_file->atEnd());
 
     _file->close();
-
-    // 重新以只读模式打开
-    _file->open(QIODevice::ReadOnly);
 }
 
-qint64 BookBrowser::_getPageLength(int page)
+qint64 BookBrowser::_getPagePos(int page_index, qint64 *page_begin)
 {
-    auto pagebegin = _page_poses[page];
+    *page_begin = _page_poses[page_index];
 
     auto pageend = 9223372036854775807;
-    if(page < _page_titles.size() - 1)
-        pageend = _page_poses[page + 1];
+    if(page_index < _page_titles.size() - 1)
+        pageend = _page_poses[page_index + 1];
 
-    return pageend - pagebegin;
+    return pageend - *page_begin;
 }
 
-qint64 BookBrowser::_getPageLength(const QString &page_title)
+qint64 BookBrowser::_getPagePos(const QString &page_title, qint64 *page_begin)
 {
     auto page = _page_titles.indexOf(page_title);
 
-    auto pagebegin = _page_poses[page];
+    *page_begin = _page_poses[page];
 
     auto pageend = 9223372036854775807;
     if(page < _page_titles.size() - 1)
         pageend = _page_poses[page + 1];
 
-    return pageend - pagebegin;
+    return pageend - *page_begin;
 }

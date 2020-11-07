@@ -17,7 +17,7 @@ public:
     QString name() { return _book_name; }
 
     // 是否可用，主要用于判断分页过程是否正常完成
-    bool isAvailable() { return _codec != nullptr && _file->exists(); }
+    bool isAvailable() { return !_page_titles.isEmpty(); }
 
     // 总页数
     int pageNumber() { return _page_titles.size(); }
@@ -46,23 +46,26 @@ public:
     bool movePrevious();
     bool moveToPage(int page);
     bool moveToRatio(float ratio);
+    // 文件是否存在
+    bool fileExists() { return _file->exists(); }
 
 private:
     // 分页。最少 1 页
-    void _bookPaging(const QString &file_path);
+    void _bookPaging();
 
-    qint64 _getPageLength(int page);
-    qint64 _getPageLength(const QString &page_title);
+    // 获取分页在文件中的位置，包括开始位置和长度
+    qint64 _getPagePos(int page_index, qint64 *page_begin);
+    qint64 _getPagePos(const QString &page_title, qint64 *page_begin);
 
 private:
     QString _book_name;
-
     QFile *_file;
+
     QTextCodec *_codec;
     QList<QString> _page_titles;
     QList<qint64> _page_poses;
 
-    int _current_page;
+    int _current_page = 0;
 };
 
 #endif // CURRENTBOOK_H
