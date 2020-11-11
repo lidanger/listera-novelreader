@@ -82,26 +82,24 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
 
-set(CMAKE_INSTALL_PREFIX "/usr")
-
-install(TARGETS ${PROJECT_NAME}
-    #CONFIGURATIONS Release
-    RUNTIME DESTINATION bin 
-    RESOURCE DESTINATION share/doc/${PROJECT_NAME})
-
-file(GLOB DESKTOP_FILES resources/*.desktop)
-
-install(FILES ${DESKTOP_FILES} 
-    DESTINATION share/applications)
-
-install(FILES resources/images/logo.png
-    DESTINATION share/icons/hicolor/128x128/apps
-    RENAME ${PROJECT_NAME}.png)
-
-file(GLOB TRANSLATION_FILES translations/*.qm)
-
-install(FILES ${TRANSLATION_FILES} 
-    DESTINATION share/${PROJECT_NAME}/translations)
+    set(CMAKE_INSTALL_PREFIX "/usr")
+    
+    install(TARGETS ${PROJECT_NAME}
+        #CONFIGURATIONS Release
+        RUNTIME DESTINATION bin 
+        RESOURCE DESTINATION share/doc/${PROJECT_NAME})
+    
+    file(GLOB DESKTOP_FILES resources/*.desktop)    
+    install(FILES ${DESKTOP_FILES} 
+        DESTINATION share/applications)
+    
+    install(FILES resources/images/logo.png
+        DESTINATION share/icons/hicolor/128x128/apps
+        RENAME ${PROJECT_NAME}.png)
+    
+    file(GLOB TRANSLATION_FILES translations/*.qm)    
+    install(FILES ${TRANSLATION_FILES} 
+        DESTINATION share/${PROJECT_NAME}/translations)
 
 endif()
 
@@ -130,28 +128,30 @@ set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_IGNORE_FILES "/CVS/;/.svn/;/.git/;.swp$;.#;/#;/build/;~") 
 
 # targets package
+set(GENERATORS)
 
-if(${CMAKE_HOST_SYSTEM_NAME} STREQUAL "Linux")
-
-# build deb packages 
-
-set(CPACK_GENERATOR "DEB")
-
-set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
-
-set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-set(CPACK_DEBIAN_PACKAGE_SECTION "text")
-
-set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${PROJECT_HOMEPAGE_URL})
-
-set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-
-set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-
-else()
-
-set(CPACK_GENERATOR "TGZ")
-
+# build deb package
+find_program(DPKG "dpkg")
+if(DPKG)
+    list(APPEND GENERATORS "DEB")
+    
+    set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+    
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "text")
+    
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${PROJECT_HOMEPAGE_URL})
+    
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
 endif()
+
+# tgz package
+if(NOT GENERATORS)
+    list(APPEND GENERATORS "TGZ")
+endif()
+
+set(CPACK_GENERATOR ${GENERATORS})
 
 include(CPack)
