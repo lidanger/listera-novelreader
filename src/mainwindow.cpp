@@ -410,6 +410,8 @@ void MainWindow::init_shortcuts()
 void MainWindow::init_data()
 {
     // 书库
+    _booklist->clear();
+
     auto books = ReaderConfig::Instance()->bookNames();
     if(!books.isEmpty())
     {
@@ -476,18 +478,11 @@ void MainWindow::import_file()
 
     for(auto it = lst.begin(); it != lst.end(); it++)
     {
-        QFileInfo fi(*it);
-
-        auto item = new QListWidgetItem(fi.baseName(), _booklist);
-        item->setData(Qt::UserRole, *it);
-        item->setSizeHint(QSize(100, 30));
-        _booklist->addItem(item);
-
         ReaderConfig::Instance()->addBook(*it);
     }
 
-    if(_booklist->count() > 0)
-        _booklist->setCurrentRow(_booklist->count() - 1);
+    // 重新载入书库
+    init_data();
 }
 
 void MainWindow::import_directory()
@@ -503,16 +498,11 @@ void MainWindow::import_directory()
 
     for(auto it = lst.begin(); it != lst.end(); it++)
     {
-        auto item = new QListWidgetItem(it->baseName(), _booklist);
-        item->setData(Qt::UserRole, it->absoluteFilePath());
-        item->setSizeHint(QSize(100, 30));
-        _booklist->addItem(item);
-
         ReaderConfig::Instance()->addBook(it->absoluteFilePath());
     }
 
-    if(_booklist->count() > 0)
-        _booklist->setCurrentRow(_booklist->count() - 1);
+    // 重新载入书库
+    init_data();
 }
 
 void MainWindow::remove_novel()

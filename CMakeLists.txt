@@ -123,14 +123,13 @@ set(CPACK_SET_DESTDIR true)
 include(InstallRequiredSystemLibraries)
 
 # source package
-
 set(CPACK_SOURCE_GENERATOR "TGZ")
 set(CPACK_SOURCE_IGNORE_FILES "/CVS/;/.svn/;/.git/;.swp$;.#;/#;/build/;~") 
 
 # targets package
 set(GENERATORS)
 
-# build deb package
+# deb package
 find_program(DPKG "dpkg")
 if(DPKG)
     list(APPEND GENERATORS "DEB")
